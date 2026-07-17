@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Polychomp-UI</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Sidebar: Projects -->
+    <aside id="sidebar" class="sidebar">
+      <header class="sidebar-header">
+        <h1 class="brand">
+          <span class="brand-icon">◉</span>
+          <span class="brand-text">Polychomp</span>
+        </h1>
+        <button id="new-project-btn" class="btn btn-primary" title="New Project">+</button>
+      </header>
+      <div id="project-list" class="project-list"></div>
+      <footer class="sidebar-footer">
+        <button id="settings-btn" class="btn btn-ghost">⚙ Settings</button>
+      </footer>
+    </aside>
+
+    <!-- Main Chat Area -->
+    <main id="chat-area" class="chat-area">
+      <header id="chat-header" class="chat-header">
+        <h2 id="project-name">Select a project</h2>
+        <div class="header-actions">
+          <button id="prism-toggle" class="btn btn-ghost btn-sm" title="Toggle PRISM Inspector">
+            🔍 PRISM
+          </button>
+          <button id="clear-chat-btn" class="btn btn-ghost btn-sm">Clear</button>
+        </div>
+      </header>
+      <div id="messages" class="messages"></div>
+      <footer class="chat-footer">
+        <div class="input-bar">
+          <textarea id="message-input" rows="1" placeholder="Message Polychomp…"></textarea>
+          <button id="send-btn" class="btn btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/></svg>
+          </button>
+        </div>
+        <div id="model-status" class="model-status">Local · phi4-mini · PRISM shadow</div>
+      </footer>
+    </main>
+
+    <!-- PRISM Inspector Panel (hidden by default) -->
+    <aside id="prism-panel" class="prism-panel hidden">
+      <header class="prism-header">
+        <h3>PRISM Inspector</h3>
+        <button id="prism-close" class="btn btn-ghost btn-sm">×</button>
+      </header>
+      <div id="prism-content" class="prism-content">
+        <p class="prism-placeholder">Select a message to inspect.</p>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-card">
+      <header class="modal-header">
+        <h3>Settings</h3>
+        <button class="btn btn-ghost btn-sm" id="close-settings">×</button>
+      </header>
+      <div class="modal-body">
+        <div class="setting-row">
+          <label for="model-endpoint">Model Endpoint</label>
+          <input type="text" id="model-endpoint" value="http://127.0.0.1:11434">
+        </div>
+        <div class="setting-row">
+          <label for="model-name">Model Name</label>
+          <input type="text" id="model-name" value="phi4-mini">
+        </div>
+        <div class="setting-row">
+          <label for="use-prism">Enable PRISM</label>
+          <input type="checkbox" id="use-prism" checked>
+        </div>
+        <div class="setting-row">
+          <label for="prism-mode">PRISM Mode</label>
+          <select id="prism-mode">
+            <option value="shadow">Shadow (log only)</option>
+            <option value="active">Active (inject into prompt)</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <label>Privacy Level</label>
+          <div class="privacy-options">
+            <label><input type="radio" name="privacy" value="local" checked> Local only</label>
+            <label><input type="radio" name="privacy" value="hybrid"> Hybrid</label>
+            <label><input type="radio" name="privacy" value="cloud"> Cloud OK</label>
+          </div>
+        </div>
+      </div>
+      <footer class="modal-footer">
+        <button class="btn btn-primary" id="save-settings">Save</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- New Project Modal -->
+  <div id="new-project-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-card">
+      <header class="modal-header">
+        <h3>New Project</h3>
+        <button class="btn btn-ghost btn-sm" id="close-new-project">×</button>
+      </header>
+      <div class="modal-body">
+        <div class="setting-row">
+          <label for="project-name-input">Name</label>
+          <input type="text" id="project-name-input" placeholder="My Project">
+        </div>
+        <div class="setting-row">
+          <label for="project-desc-input">Description</label>
+          <textarea id="project-desc-input" rows="2" placeholder="What is this project about?"></textarea>
+        </div>
+      </div>
+      <footer class="modal-footer">
+        <button class="btn btn-primary" id="create-project">Create</button>
+      </footer>
+    </div>
+  </div>
+
+<script src="/js/app.js"></script>
+</body>
+</html>

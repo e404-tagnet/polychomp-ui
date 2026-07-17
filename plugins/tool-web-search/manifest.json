@@ -1,0 +1,19 @@
+{
+  "id": "tool-web-search",
+  "name": "Web Search",
+  "description": "Search the web for current information. (Placeholder — requires API key)",
+  "version": "0.1.0",
+  "author": "Polychomp Team",
+  "type": "tool",
+  "entry_point": "main.py",
+  "hooks": ["pre_send"],
+  "commands": {
+    "/search": "handle_search"
+  },
+  "config_schema": {
+    "api_key": { "type": "str", "default": "" },
+    "results": { "type": "int", "default": 5 }
+  },
+  "tags": ["web", "search", "external"],
+  "icon": "icon.svg"
+}

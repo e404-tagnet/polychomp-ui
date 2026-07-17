@@ -3,11 +3,12 @@ import os
 import sys
 import json
 import uuid
+import asyncio
 from pathlib import Path
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, File, UploadFile
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -22,6 +23,23 @@ from prism.core.memory import MemoryStore, MemoryEntry
 APP_ROOT = Path(__file__).resolve().parent.parent
 PROJECTS_DIR = APP_ROOT / "projects"
 PROJECTS_DIR.mkdir(exist_ok=True)
+
+# ── Plugin Manager ────────────────────────────────────────
+from plugin_manager import PluginManager
+
+PLUGINS_DIR = APP_ROOT / "plugins"
+PLUGINS_DIR.mkdir(parents=True, exist_ok=True)
+plugin_mgr = PluginManager(PLUGINS_DIR)
+
+# Load persisted state
+PLUGIN_STATE_PATH = APP_ROOT / "projects" / "__plugin_state__.json"
+if PLUGIN_STATE_PATH.exists():
+    plugin_mgr.load_state(PLUGIN_STATE_PATH)
+else:
+    # Auto-enable built-in plugins
+    for pid in ["skill-summarize", "tool-web-search", "scaffold-prism"]:
+        if pid in plugin_mgr._registry:
+            plugin_mgr.load(pid)
 
 app = FastAPI(title="Polychomp-UI", version="0.1.0")
 
@@ -225,6 +243,18 @@ def chat(req: ChatRequest):
             "frustrated": result.meta.get("is_frustrated", False),
         }
     
+    # ── Run plugin pre_send hooks ──
+    plugin_context = {
+        "project_id": req.project_id,
+        "last_user_message": req.message,
+        "prism_meta": prism_meta,
+    }
+    loop = asyncio.new_event_loop()
+    modified_message = loop.run_until_complete(plugin_mgr.run_hook("pre_send", req.message, plugin_context))
+    loop.close()
+    if modified_message != req.message:
+        req.message = modified_message  # plugins may rewrite or intercept
+
     # ── LLM Response via Ollama ──
     llm_response = "[LLM unavailable — PRISM shadow mode only]"
     try:
@@ -246,6 +276,14 @@ def chat(req: ChatRequest):
         llm_response = ollama_data.get("response", llm_response)
     except Exception as e:
         llm_response = f"[Ollama error: {e}]"
+
+    # ── Run plugin post_receive hooks ──
+    plugin_context["response"] = llm_response
+    loop = asyncio.new_event_loop()
+    modified_response = loop.run_until_complete(plugin_mgr.run_hook("post_receive", llm_response, plugin_context))
+    loop.close()
+    if modified_response != llm_response:
+        llm_response = modified_response
     
     # Store messages
     project["messages"].append({
@@ -265,6 +303,35 @@ def chat(req: ChatRequest):
         "response": llm_response,
         "prism_meta": prism_meta,
     }
+
+# ── Plugin API ──────────────────────────────────────────────
+
+@app.get("/api/plugins")
+def list_plugins(type_filter: Optional[str] = None):
+    return plugin_mgr.list_plugins(type_filter=type_filter)
+
+@app.post("/api/plugins/{plugin_id}/enable")
+def enable_plugin(plugin_id: str, config: Optional[Dict] = None):
+    ok = plugin_mgr.load(plugin_id, config)
+    if not ok:
+        raise HTTPException(status_code=400, detail="Failed to enable plugin")
+    plugin_mgr.save_state(PLUGIN_STATE_PATH)
+    return {"ok": True, "plugin": plugin_id}
+
+@app.post("/api/plugins/{plugin_id}/disable")
+def disable_plugin(plugin_id: str):
+    plugin_mgr.unload(plugin_id)
+    plugin_mgr.save_state(PLUGIN_STATE_PATH)
+    return {"ok": True, "plugin": plugin_id}
+
+@app.delete("/api/plugins/{plugin_id}")
+def delete_plugin(plugin_id: str):
+    plugin_mgr.unload(plugin_id)
+    ok = plugin_mgr.delete(plugin_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Plugin not found")
+    plugin_mgr.save_state(PLUGIN_STATE_PATH)
+    return {"ok": True}
 
 # ── Static Frontend ───────────────────────────────────────
 

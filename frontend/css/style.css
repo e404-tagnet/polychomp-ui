@@ -139,6 +139,29 @@ html, body { height: 100%; font-family: var(--font-sans); background: var(--crus
 .onboarding-q label:hover { color: var(--sky); }
 .onboarding-q input[type="radio"] { accent-color: var(--sapphire); width: 16px; height: 16px; }
 
+/* ── Plugin Manager ──────────────────────── */
+.plugin-tabs { display: flex; gap: .25rem; margin-bottom: 1rem; border-bottom: 1px solid var(--surface0); padding-bottom: .5rem; }
+.plugin-tab { padding: .35rem .7rem; border-radius: .4rem; border: none; background: transparent; color: var(--overlay0); font-size: .8rem; font-weight: 600; cursor: pointer; transition: all .15s; }
+.plugin-tab:hover { color: var(--text); background: var(--surface0); }
+.plugin-tab.active { color: var(--text); background: var(--surface1); }
+
+.plugin-list { display: flex; flex-direction: column; gap: .6rem; }
+.plugin-card { display: flex; align-items: flex-start; gap: .75rem; padding: .75rem; border-radius: .5rem; border: 1px solid var(--surface0); background: var(--base); }
+.plugin-icon { width: 36px; height: 36px; border-radius: .5rem; background: var(--surface0); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
+.plugin-info { flex: 1; min-width: 0; }
+.plugin-name { font-weight: 600; font-size: .88rem; color: var(--text); }
+.plugin-desc { font-size: .75rem; color: var(--overlay0); margin-top: .15rem; }
+.plugin-meta { display: flex; gap: .5rem; margin-top: .25rem; font-size: .65rem; color: var(--overlay1); }
+.plugin-type { text-transform: uppercase; font-weight: 600; }
+.plugin-type.scaffold { color: var(--teal); }
+.plugin-type.skill { color: var(--sky); }
+.plugin-type.tool { color: var(--peach); }
+.plugin-tags { display: flex; gap: .25rem; flex-wrap: wrap; }
+.plugin-tag { padding: .1rem .3rem; border-radius: .2rem; background: var(--surface0); font-size: .65rem; color: var(--subtext0); }
+.plugin-toggle { display: flex; align-items: center; gap: .35rem; }
+.plugin-toggle input[type="checkbox"] { accent-color: var(--sapphire); width: 18px; height: 18px; cursor: pointer; }
+.plugin-toggle label { font-size: .75rem; color: var(--subtext0); cursor: pointer; }
+
 /* Responsive */
 @media (max-width: 768px) {
   #app { grid-template-columns: 0 1fr 0; }

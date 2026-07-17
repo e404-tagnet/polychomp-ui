@@ -1,0 +1,14 @@
+{
+  "id": "scaffold-prism",
+  "name": "PRISM",
+  "description": "Shadow Bayesian scaffold for bias detection and adaptive routing. Built-in and always available.",
+  "version": "1.0.0",
+  "author": "Polychomp Team",
+  "type": "scaffold",
+  "entry_point": "",
+  "hooks": [],
+  "commands": {},
+  "config_schema": {},
+  "tags": ["scaffold", "bias", "routing"],
+  "icon": "icon.svg"
+}

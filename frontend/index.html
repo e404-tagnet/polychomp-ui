@@ -19,6 +19,7 @@
       </header>
       <div id="project-list" class="project-list"></div>
       <footer class="sidebar-footer">
+        <button id="plugins-btn" class="btn btn-ghost">🔌 Plugins</button>
         <button id="settings-btn" class="btn btn-ghost">⚙ Settings</button>
       </footer>
     </aside>
@@ -221,6 +222,29 @@
       </div>
       <footer class="modal-footer">
         <button class="btn btn-primary" id="save-onboarding">Save Profile &amp; Continue</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Plugin Manager Modal -->
+  <div id="plugin-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-card" style="width:600px;max-height:90vh;display:flex;flex-direction:column;">
+      <header class="modal-header">
+        <h3>Plugin Manager</h3>
+        <button class="btn btn-ghost btn-sm" id="close-plugins">×</button>
+      </header>
+      <div class="modal-body" style="overflow-y:auto;">
+        <div class="plugin-tabs">
+          <button class="plugin-tab active" data-filter="all">All</button>
+          <button class="plugin-tab" data-filter="scaffold">Scaffolds</button>
+          <button class="plugin-tab" data-filter="skill">Skills</button>
+          <button class="plugin-tab" data-filter="tool">Tools</button>
+        </div>
+        <div id="plugin-list" class="plugin-list"></div>
+      </div>
+      <footer class="modal-footer">
+        <button class="btn btn-ghost" id="refresh-plugins">🔄 Refresh</button>
       </footer>
     </div>
   </div>

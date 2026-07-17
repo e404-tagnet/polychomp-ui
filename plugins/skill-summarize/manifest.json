@@ -1,0 +1,19 @@
+{
+  "id": "skill-summarize",
+  "name": "Summarize",
+  "description": "Summarize long text responses into concise bullet points.",
+  "version": "1.0.0",
+  "author": "Polychomp Team",
+  "type": "skill",
+  "entry_point": "main.py",
+  "hooks": ["post_receive"],
+  "commands": {
+    "/summarize": "handle_summarize"
+  },
+  "config_schema": {
+    "max_length": { "type": "int", "default": 200 },
+    "style": { "type": "str", "default": "bullets" }
+  },
+  "tags": ["text", "productivity"],
+  "icon": "icon.svg"
+}

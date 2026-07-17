@@ -6,3 +6,4 @@ projects/*.json
 node_modules/
 dist/
 
+__plugin_state__.json

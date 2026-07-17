@@ -95,6 +95,75 @@ async function saveOnboarding() {
   closeOnboarding();
 }
 
+// ── Plugin Manager ────────────────────────────────────────
+let pluginStore = [];
+let pluginFilter = "all";
+
+async function loadPlugins(force = false) {
+  if (!force && pluginStore.length) return;
+  const res = await fetch(`${API_BASE}/api/plugins`);
+  pluginStore = await res.json();
+  renderPluginList(pluginFilter);
+}
+
+function renderPluginList(filter) {
+  pluginFilter = filter;
+  const container = document.getElementById("plugin-list");
+  container.innerHTML = "";
+
+  const filtered = pluginStore.filter(p => filter === "all" || p.type === filter);
+  if (!filtered.length) {
+    container.innerHTML = `<p style="color:var(--overlay0);text-align:center;padding:1rem;">No plugins found.</p>`;
+    return;
+  }
+
+  for (const p of filtered) {
+    const icon = p.icon ? "📦" : "🔌";
+    const tagsHtml = (p.tags || []).map(t => `<span class="plugin-tag">${t}</span>`).join("");
+    const el = document.createElement("div");
+    el.className = "plugin-card";
+    el.innerHTML = `
+      <div class="plugin-icon">${icon}</div>
+      <div class="plugin-info">
+        <div class="plugin-name">${escapeHtml(p.name)}</div>
+        <div class="plugin-desc">${escapeHtml(p.description)}</div>
+        <div class="plugin-meta">
+          <span class="plugin-type ${p.type}">${p.type}</span>
+          <span>v${p.version}</span>
+          <span>${p.author}</span>
+          <div class="plugin-tags">${tagsHtml}</div>
+        </div>
+      </div>
+      <div class="plugin-toggle">
+        <label>
+          <input type="checkbox" data-id="${p.id}" ${p.enabled ? "checked" : ""}>
+          ${p.enabled ? "On" : "Off"}
+        </label>
+      </div>
+    `;
+    const checkbox = el.querySelector('input[type="checkbox"]');
+    checkbox.addEventListener("change", async () => {
+      await togglePlugin(p.id, checkbox.checked);
+    });
+    container.appendChild(el);
+  }
+}
+
+async function togglePlugin(pluginId, enable) {
+  const endpoint = enable ? `/api/plugins/${pluginId}/enable` : `/api/plugins/${pluginId}/disable`;
+  await fetch(`${API_BASE}${endpoint}`, { method: "POST" });
+  await loadPlugins(true);
+}
+
+function openPluginManager() {
+  document.getElementById("plugin-modal").classList.remove("hidden");
+  loadPlugins();
+}
+
+function closePluginManager() {
+  document.getElementById("plugin-modal").classList.add("hidden");
+}
+
 // ── Projects ─────────────────────────────────────────────────
 async function loadProjects() {
   const res = await fetch(`${API_BASE}/api/projects`);
@@ -342,6 +411,19 @@ function setupEventListeners() {
 
   document.getElementById("close-onboarding").addEventListener("click", closeOnboarding);
   document.getElementById("save-onboarding").addEventListener("click", saveOnboarding);
+
+  document.getElementById("plugins-btn").addEventListener("click", openPluginManager);
+  document.getElementById("close-plugins").addEventListener("click", closePluginManager);
+  document.getElementById("refresh-plugins").addEventListener("click", () => loadPlugins(true));
+
+  // Plugin filter tabs
+  document.querySelectorAll(".plugin-tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".plugin-tab").forEach(t => t.classList.remove("active"));
+      tab.classList.add("active");
+      renderPluginList(tab.dataset.filter);
+    });
+  });
 
   document.getElementById("clear-chat-btn").addEventListener("click", () => {
     if (!currentProject) return;

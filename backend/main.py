@@ -1,4 +1,3 @@
-"""FastAPI backend for Polychomp-UI."""
 import os
 import sys
 import json
@@ -8,12 +7,13 @@ from pathlib import Path
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 
-from fastapi import FastAPI, HTTPException, Request, File, UploadFile
+import uvicorn
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
-# Add PRISM src to path
+app = FastAPI(title="Polychomp-UI")
 PRISM_ROOT = Path(__file__).resolve().parents[1] / ".." / "prism-scaffold" / "src"
 sys.path.insert(0, str(PRISM_ROOT))
 
@@ -336,3 +336,23 @@ def delete_plugin(plugin_id: str):
 # ── Static Frontend ───────────────────────────────────────
 
 app.mount("/", StaticFiles(directory=APP_ROOT / "frontend", html=True), name="frontend")
+
+# ── SSL Runner ────────────────────────────────────────────
+if __name__ == "__main__":
+    import ssl
+    import uvicorn
+
+    SSL_KEY = Path(__file__).parent / "localhost-key.pem"
+    SSL_CERT = Path(__file__).parent / "localhost-cert.pem"
+
+    if SSL_KEY.exists() and SSL_CERT.exists():
+        uvicorn.run(
+            "main:app",
+            host="0.0.0.0",
+            port=8788,
+            ssl_keyfile=str(SSL_KEY),
+            ssl_certfile=str(SSL_CERT),
+            log_level="error",
+        )
+    else:
+        uvicorn.run("main:app", host="0.0.0.0", port=8788, log_level="error")

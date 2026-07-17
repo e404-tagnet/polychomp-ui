@@ -12,6 +12,7 @@ let settings = {
   usePrism: true,
   prismMode: "shadow",
   privacy: "local",
+  prismVisible: false,
 };
 
 // ── DOM refs ────────────────────────────────────────────────
@@ -28,9 +29,70 @@ const modelStatus    = document.getElementById("model-status");
 // ── Init ─────────────────────────────────────────────────────
 async function init() {
   loadSettings();
+  const profile = await checkProfile();
+  if (!profile) {
+    showOnboarding();
+  }
   await loadProjects();
   setupEventListeners();
   if (projects.length) selectProject(projects[0].id);
+}
+
+// ── Profile ─────────────────────────────────────────────────
+async function checkProfile() {
+  const res = await fetch(`${API_BASE}/api/profile`);
+  const data = await res.json();
+  if (data.exists) {
+    // Apply profile defaults to settings
+    const p = data.profile;
+    if (p.privacy_default) settings.privacy = p.privacy_default;
+    if (p.temperature_preference) {
+      settings.temperature = p.temperature_preference === "cautious" ? 0.3 : p.temperature_preference === "creative" ? 0.8 : 0.5;
+    }
+    if (p.prism_visibility) {
+      settings.prismVisible = p.prism_visibility === "visible";
+    }
+    return p;
+  }
+  return null;
+}
+
+function showOnboarding() {
+  document.getElementById("onboarding-modal").classList.remove("hidden");
+}
+
+function closeOnboarding() {
+  document.getElementById("onboarding-modal").classList.add("hidden");
+}
+
+async function saveOnboarding() {
+  const getVal = (name) => document.querySelector(`input[name="${name}"]:checked`)?.value;
+  
+  const profile = {
+    technical_level: getVal("q1"),
+    interaction_style: getVal("q2"),
+    correction_reaction: getVal("q3"),
+    detail_preference: getVal("q4"),
+    challenge_frequency: getVal("q5"),
+    project_type: getVal("q6"),
+    prism_visibility: getVal("q7"),
+    temperature_preference: getVal("q8"),
+    privacy_default: getVal("q9"),
+    cross_project_memory: getVal("q10") === "true",
+  };
+  
+  await fetch(`${API_BASE}/api/profile`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(profile),
+  });
+  
+  // Apply locally
+  settings.privacy = profile.privacy_default;
+  settings.temperature = profile.temperature_preference === "cautious" ? 0.3 : profile.temperature_preference === "creative" ? 0.8 : 0.5;
+  settings.prismVisible = profile.prism_visibility === "visible";
+  updateModelStatus();
+  closeOnboarding();
 }
 
 // ── Projects ─────────────────────────────────────────────────
@@ -277,6 +339,9 @@ function setupEventListeners() {
     document.getElementById("project-name-input").value = "";
     document.getElementById("project-desc-input").value = "";
   });
+
+  document.getElementById("close-onboarding").addEventListener("click", closeOnboarding);
+  document.getElementById("save-onboarding").addEventListener("click", saveOnboarding);
 
   document.getElementById("clear-chat-btn").addEventListener("click", () => {
     if (!currentProject) return;

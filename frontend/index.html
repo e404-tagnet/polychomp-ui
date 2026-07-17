@@ -125,6 +125,106 @@
     </div>
   </div>
 
+  <!-- Onboarding Modal -->
+  <div id="onboarding-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-card" style="width:520px;max-height:90vh;display:flex;flex-direction:column;">
+      <header class="modal-header">
+        <h3>Welcome to Polychomp 🐉</h3>
+        <button class="btn btn-ghost btn-sm" id="close-onboarding">×</button>
+      </header>
+      <div class="modal-body" id="onboarding-body" style="overflow-y:auto;">
+        <p style="color:var(--overlay1);margin-bottom:1rem;font-size:.85rem;">
+          A few quick questions help PRISM adapt to you. You can always change these later in Settings.
+        </p>
+
+        <!-- Q1 -->
+        <div class="onboarding-q">
+          <h4>1. How technical are you?</h4>
+          <label><input type="radio" name="q1" value="beginner"> Beginner — new to LLMs and scaffolds</label>
+          <label><input type="radio" name="q1" value="intermediate" checked> Intermediate — comfortable with tools</label>
+          <label><input type="radio" name="q1" value="advanced"> Advanced — building my own pipelines</label>
+          <label><input type="radio" name="q1" value="expert"> Expert — I read the papers</label>
+        </div>
+
+        <!-- Q2 -->
+        <div class="onboarding-q">
+          <h4>2. How do you like to interact?</h4>
+          <label><input type="radio" name="q2" value="direct" checked> Direct — give me answers fast</label>
+          <label><input type="radio" name="q2" value="exploratory"> Exploratory — I like to wander and discover</label>
+          <label><input type="radio" name="q2" value="step_by_step"> Step by step — break it down</label>
+        </div>
+
+        <!-- Q3 -->
+        <div class="onboarding-q">
+          <h4>3. When the system corrects you, how do you feel?</h4>
+          <label><input type="radio" name="q3" value="appreciate"> I appreciate the nudge</label>
+          <label><input type="radio" name="q3" value="neutral" checked> Neutral — depends on the context</label>
+          <label><input type="radio" name="q3" value="defensive"> I find it irritating</label>
+        </div>
+
+        <!-- Q4 -->
+        <div class="onboarding-q">
+          <h4>4. How much detail do you want in responses?</h4>
+          <label><input type="radio" name="q4" value="concise"> Concise — bullet points, no fluff</label>
+          <label><input type="radio" name="q4" value="balanced" checked> Balanced — enough to act on</label>
+          <label><input type="radio" name="q4" value="detailed"> Detailed — explain the reasoning</label>
+        </div>
+
+        <!-- Q5 -->
+        <div class="onboarding-q">
+          <h4>5. How often should PRISM challenge your assumptions?</h4>
+          <label><input type="radio" name="q5" value="often"> Often — I want to be pushed</label>
+          <label><input type="radio" name="q5" value="sometimes" checked> Sometimes — when confidence is high</label>
+          <label><input type="radio" name="q5" value="rarely"> Rarely — only if clearly wrong</label>
+          <label><input type="radio" name="q5" value="never"> Never — just comply</label>
+        </div>
+
+        <!-- Q6 -->
+        <div class="onboarding-q">
+          <h4>6. What kind of projects do you mostly do?</h4>
+          <label><input type="radio" name="q6" value="creative" checked> Creative — writing, design, art</label>
+          <label><input type="radio" name="q6" value="analytical"> Analytical — code, data, research</label>
+          <label><input type="radio" name="q6" value="mixed"> Mixed — a bit of everything</label>
+        </div>
+
+        <!-- Q7 -->
+        <div class="onboarding-q">
+          <h4>7. PRISM inspector panel preference</h4>
+          <label><input type="radio" name="q7" value="visible"> Visible by default — I want to see every analysis</label>
+          <label><input type="radio" name="q7" value="hidden" checked> Hidden by default — I'll click when curious</label>
+        </div>
+
+        <!-- Q8 -->
+        <div class="onboarding-q">
+          <h4>8. Default creativity/temperature</h4>
+          <label><input type="radio" name="q8" value="cautious"> Cautious — precise, conservative</label>
+          <label><input type="radio" name="q8" value="balanced" checked> Balanced — some creativity</label>
+          <label><input type="radio" name="q8" value="creative"> Creative — wild ideas welcome</label>
+        </div>
+
+        <!-- Q9 -->
+        <div class="onboarding-q">
+          <h4>9. Default privacy setting</h4>
+          <label><input type="radio" name="q9" value="local" checked> Local only — nothing leaves my machine</label>
+          <label><input type="radio" name="q9" value="hybrid"> Hybrid — PRISM local, LLM optionally cloud</label>
+          <label><input type="radio" name="q9" value="cloud"> Cloud OK — I'm fine with remote inference</label>
+        </div>
+
+        <!-- Q10 -->
+        <div class="onboarding-q">
+          <h4>10. Should core memory (who you are, your preferences) carry across projects?</h4>
+          <label><input type="radio" name="q10" value="true" checked> Yes — Polychomp should learn me over time</label>
+          <label><input type="radio" name="q10" value="false"> No — keep each project isolated</label>
+        </div>
+
+      </div>
+      <footer class="modal-footer">
+        <button class="btn btn-primary" id="save-onboarding">Save Profile &amp; Continue</button>
+      </footer>
+    </div>
+  </div>
+
 <script src="/js/app.js"></script>
 </body>
 </html>

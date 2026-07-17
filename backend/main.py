@@ -34,6 +34,18 @@ app.add_middleware(
 
 # ── Models ────────────────────────────────────────────────
 
+class UserProfile(BaseModel):
+    technical_level: str       # beginner / intermediate / advanced / expert
+    interaction_style: str       # direct / exploratory / step_by_step
+    correction_reaction: str   # appreciate / neutral / defensive
+    detail_preference: str     # concise / balanced / detailed
+    challenge_frequency: str   # often / sometimes / rarely / never
+    project_type: str          # creative / analytical / mixed
+    prism_visibility: str      # visible / hidden
+    temperature_preference: str # cautious / balanced / creative
+    privacy_default: str       # local / hybrid / cloud
+    cross_project_memory: bool # true / false
+
 class ChatMessage(BaseModel):
     role: str
     content: str
@@ -73,6 +85,47 @@ def _save_project(project_id: str, data: Dict) -> None:
     with open(_project_path(project_id), "w") as f:
         json.dump(data, f, indent=2)
 
+def _ensure_welcome_project() -> Dict:
+    """Create or return the built-in Welcome project."""
+    welcome_id = "__welcome__"
+    path = _project_path(welcome_id)
+    if path.exists():
+        return json.load(open(path))
+    welcome = {
+        "id": welcome_id,
+        "name": "📘 Welcome",
+        "description": "Getting started with Polychomp",
+        "created": datetime.utcnow().isoformat(),
+        "messages": [
+            {"role": "assistant", "content": "👋 Welcome to Polychomp!\n\nI'm your scaffold-aware chat companion. Here's how I work:", "prism_meta": None, "timestamp": datetime.utcnow().isoformat()},
+            {"role": "assistant", "content": "🧠 **Projects**\nEach project is a separate workspace with its own memory. Create projects for different tasks — coding, writing, research, etc.", "prism_meta": None, "timestamp": datetime.utcnow().isoformat()},
+            {"role": "assistant", "content": "🔍 **PRISM Shadow Analysis**\nEvery message you send gets analysed for bias (authority, confirmation, sunk cost, etc.). Click the coloured chip on your messages to see the full inspector.", "prism_meta": None, "timestamp": datetime.utcnow().isoformat()},
+            {"role": "assistant", "content": "🎚️ **Adaptive Behaviour**\nPRISM adjusts temperature, assertiveness, and routing based on what it detects. If it spots sunk cost, it challenges gently. If you're stuck, it reframes.", "prism_meta": None, "timestamp": datetime.utcnow().isoformat()},
+            {"role": "assistant", "content": "🛡️ **Privacy Tiers**\nLocal = everything on your machine. Hybrid = PRISM local, LLM optionally cloud. Cloud = hosted. You can switch per project or per message.", "prism_meta": None, "timestamp": datetime.utcnow().isoformat()},
+            {"role": "assistant", "content": "⚙️ **Settings** (gear icon)\nChange model endpoint, PRISM mode (shadow vs active), and default privacy. Shadow = log only. Active = injects routing into the LLM prompt.", "prism_meta": None, "timestamp": datetime.utcnow().isoformat()},
+            {"role": "assistant", "content": "📊 **Tiered Memory**\nCore memory (who you are, what you like) persists across projects. Session memory is per-project. Decision logs track what worked.", "prism_meta": None, "timestamp": datetime.utcnow().isoformat()},
+            {"role": "assistant", "content": "💡 **Tips**\n• Create a project before chatting\n• Try the PRISM inspector on any message\n• Switch models per project if needed\n• The system learns from your corrections — correct it when it's wrong", "prism_meta": None, "timestamp": datetime.utcnow().isoformat()},
+        ],
+        "prism_state": None,
+        "is_system": True,
+    }
+    _save_project(welcome_id, welcome)
+    return welcome
+
+def _profile_path() -> Path:
+    return APP_ROOT / "projects" / "__user_profile__.json"
+
+def _load_profile() -> Optional[Dict]:
+    path = _profile_path()
+    if path.exists():
+        return json.load(open(path))
+    return None
+
+def _save_profile(data: Dict) -> None:
+    _profile_path().parent.mkdir(parents=True, exist_ok=True)
+    with open(_profile_path(), "w") as f:
+        json.dump(data, f, indent=2)
+
 # ── Endpoints ─────────────────────────────────────────────
 
 @app.post("/api/projects", response_model=Project)
@@ -91,8 +144,11 @@ def create_project(req: ProjectCreate):
 
 @app.get("/api/projects", response_model=List[Project])
 def list_projects():
+    _ensure_welcome_project()  # Ensure Welcome exists
     projects = []
     for f in sorted(PROJECTS_DIR.glob("*.json")):
+        if f.name.startswith("__"):  # Skip system files
+            continue
         with open(f, "r") as fh:
             data = json.load(fh)
         projects.append(Project(
@@ -109,7 +165,30 @@ def get_project(project_id: str):
 
 @app.delete("/api/projects/{project_id}")
 def delete_project(project_id: str):
+    if project_id == "__welcome__":
+        raise HTTPException(status_code=403, detail="Cannot delete system project")
     path = _project_path(project_id)
+    if path.exists():
+        path.unlink()
+    return {"ok": True}
+
+# ── Profile Endpoints ─────────────────────────────────────
+
+@app.get("/api/profile")
+def get_profile():
+    profile = _load_profile()
+    if not profile:
+        return {"exists": False}
+    return {"exists": True, "profile": profile}
+
+@app.post("/api/profile")
+def save_profile(req: UserProfile):
+    _save_profile(req.dict())
+    return {"ok": True}
+
+@app.delete("/api/profile")
+def reset_profile():
+    path = _profile_path()
     if path.exists():
         path.unlink()
     return {"ok": True}

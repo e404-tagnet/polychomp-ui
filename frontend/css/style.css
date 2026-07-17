@@ -131,6 +131,14 @@ html, body { height: 100%; font-family: var(--font-sans); background: var(--crus
 ::-webkit-scrollbar-thumb { background: var(--surface1); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--surface2); }
 
+/* ── Onboarding ───────────────────────────── */
+.onboarding-q { margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 1px solid var(--surface0); }
+.onboarding-q:last-child { border-bottom: none; }
+.onboarding-q h4 { font-size: .85rem; font-weight: 600; color: var(--teal); margin-bottom: .5rem; }
+.onboarding-q label { display: flex; align-items: center; gap: .4rem; padding: .25rem 0; font-size: .8rem; color: var(--text); cursor: pointer; }
+.onboarding-q label:hover { color: var(--sky); }
+.onboarding-q input[type="radio"] { accent-color: var(--sapphire); width: 16px; height: 16px; }
+
 /* Responsive */
 @media (max-width: 768px) {
   #app { grid-template-columns: 0 1fr 0; }

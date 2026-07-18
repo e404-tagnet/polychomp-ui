@@ -298,13 +298,14 @@ async function selectProject(pid) {
   projectName.textContent = currentProject.name;
   renderMessages();
   renderProjects();
+  loadWorkspace();
 }
 
-async function createProject(name, description) {
+async function createProject(name, description, workspacePath = null) {
   const res = await fetch(`${API_BASE}/api/projects`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, description }),
+    body: JSON.stringify({ name, description, workspace_path: workspacePath }),
   });
   const p = await res.json();
   projects.push(p);
@@ -569,7 +570,88 @@ function fmtAge(iso) {
   return `${days}d ago`;
 }
 
-// ── Send Message ───────────────────────────────────────────
+function fmtBytes(b) {
+  if (b < 1024) return `${b}B`;
+  if (b < 1024 * 1024) return `${Math.round(b / 1024)}KB`;
+  return `${Math.round(b / (1024 * 1024))}MB`;
+}
+
+// ── Workspace ──────────────────────────────────────────────
+let workspaceFiles = [];
+let workspaceExpanded = false;
+
+async function loadWorkspace() {
+  const bar = document.getElementById("workspace-bar");
+  const filesContainer = document.getElementById("workspace-files");
+  if (!bar || !filesContainer) return;
+
+  if (!currentProject?.workspace_path) {
+    bar.classList.add("hidden");
+    filesContainer.classList.add("hidden");
+    workspaceExpanded = false;
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/api/projects/${currentProject.id}/workspace`);
+    const data = await res.json();
+    workspaceFiles = data.files || [];
+    const path = data.path || currentProject.workspace_path;
+
+    document.getElementById("workspace-path").textContent = path;
+    document.getElementById("workspace-count").textContent = `${workspaceFiles.length} files`;
+    bar.classList.remove("hidden");
+
+    renderWorkspaceFiles();
+  } catch (e) {
+    document.getElementById("workspace-path").textContent = "Error loading workspace";
+    bar.classList.remove("hidden");
+  }
+}
+
+function renderWorkspaceFiles() {
+  const container = document.getElementById("workspace-files");
+  if (!container) return;
+  if (!workspaceExpanded) {
+    container.classList.add("hidden");
+    return;
+  }
+  if (!workspaceFiles.length) {
+    container.innerHTML = `<span style="color:var(--overlay0);font-size:.7rem;">No files found.</span>`;
+    container.classList.remove("hidden");
+    return;
+  }
+  container.innerHTML = workspaceFiles.map(f => `
+    <span class="workspace-file" data-fname="${escapeHtml(f.name)}">
+      ${escapeHtml(f.name)}
+      <span class="fsize">${fmtBytes(f.size)}</span>
+    </span>
+  `).join("");
+  container.classList.remove("hidden");
+}
+
+async function injectFileIntoChat(filename) {
+  if (!currentProject) return;
+  try {
+    const res = await fetch(`${API_BASE}/api/projects/${currentProject.id}/workspace/${encodeURIComponent(filename)}`);
+    const data = await res.json();
+    if (data.content) {
+      const snippet = data.content.slice(0, 2000);
+      const trimmed = data.content.length > 2000 ? "...(truncated)" : "";
+      messageInput.value += (messageInput.value ? "\n\n" : "") + `--- ${filename} ---\n${snippet}${trimmed}\n---`;
+      messageInput.style.height = "auto";
+      messageInput.style.height = messageInput.scrollHeight + "px";
+    }
+  } catch (e) {
+    alert("Could not load file: " + filename);
+  }
+}
+
+function toggleWorkspaceFiles() {
+  workspaceExpanded = !workspaceExpanded;
+  renderWorkspaceFiles();
+}
+
 async function sendMessage() {
   const text = messageInput.value.trim();
   if (!text || !currentProject) return;
@@ -764,11 +846,13 @@ function setupEventListeners() {
   document.getElementById("create-project").addEventListener("click", () => {
     const name = document.getElementById("project-name-input").value.trim();
     const desc = document.getElementById("project-desc-input").value.trim();
+    const workspace = document.getElementById("project-workspace-input").value.trim() || null;
     if (!name) return;
-    createProject(name, desc);
+    createProject(name, desc, workspace);
     closeNewProject();
     document.getElementById("project-name-input").value = "";
     document.getElementById("project-desc-input").value = "";
+    document.getElementById("project-workspace-input").value = "";
   });
 
   document.getElementById("close-onboarding").addEventListener("click", closeOnboarding);
@@ -803,6 +887,14 @@ function setupEventListeners() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(currentProject),
     });
+  });
+
+  // Workspace file toggle + click-to-inject
+  document.getElementById("workspace-toggle")?.addEventListener("click", toggleWorkspaceFiles);
+  document.getElementById("workspace-files")?.addEventListener("click", (e) => {
+    const chip = e.target.closest(".workspace-file");
+    if (!chip) return;
+    injectFileIntoChat(chip.dataset.fname);
   });
 }
 

@@ -27,7 +27,16 @@
     <!-- Main Chat Area -->
     <main id="chat-area" class="chat-area">
       <header id="chat-header" class="chat-header">
-        <h2 id="project-name">Select a project</h2>
+        <div>
+          <h2 id="project-name">Select a project</h2>
+          <div id="workspace-bar" class="workspace-bar hidden">
+            <span class="workspace-label">Workspace:</span>
+            <span id="workspace-path" class="workspace-path"></span>
+            <span id="workspace-count" class="workspace-count"></span>
+            <button id="workspace-toggle" class="btn btn-ghost btn-sm">Files</button>
+          </div>
+          <div id="workspace-files" class="workspace-files hidden"></div>
+        </div>
         <div class="header-actions">
           <button id="memory-toggle" class="btn btn-ghost btn-sm" title="Toggle Memory Panel">
             Memory
@@ -158,6 +167,11 @@
         <div class="setting-row">
           <label for="project-desc-input">Description</label>
           <textarea id="project-desc-input" rows="2" placeholder="What is this project about?"></textarea>
+        </div>
+        <div class="setting-row">
+          <label for="project-workspace-input">Workspace Folder (optional)</label>
+          <input type="text" id="project-workspace-input" placeholder="e.g. /home/user/project-docs">
+          <p style="color:var(--overlay0);font-size:.75rem;margin-top:.25rem;">Link a local folder. Files become available in the project context.</p>
         </div>
       </div>
       <footer class="modal-footer">

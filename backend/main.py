@@ -82,12 +82,14 @@ class ChatRequest(BaseModel):
 class ProjectCreate(BaseModel):
     name: str
     description: str = ""
+    workspace_path: Optional[str] = None
 
 class Project(BaseModel):
     id: str
     name: str
     description: str
     created: str
+    workspace_path: Optional[str] = None
 
 # ── Helpers ───────────────────────────────────────────────
 
@@ -155,6 +157,7 @@ def create_project(req: ProjectCreate):
         "id": pid,
         "name": req.name,
         "description": req.description,
+        "workspace_path": req.workspace_path,
         "created": datetime.utcnow().isoformat(),
         "messages": [],
         "prism_state": None,
@@ -176,6 +179,7 @@ def list_projects():
             name=data["name"],
             description=data.get("description", ""),
             created=data["created"],
+            workspace_path=data.get("workspace_path"),
         ))
     return projects
 
@@ -233,12 +237,16 @@ class MemoryUpdate(BaseModel):
     tags: Optional[List[str]] = None
 
 class ProjectUpdate(BaseModel):
-    messages: List[Dict[str, Any]]
+    messages: List[Dict[str, Any]] = []
+    workspace_path: Optional[str] = None
 
 @app.put("/api/projects/{project_id}")
 def update_project(project_id: str, req: ProjectUpdate):
     project = _load_project(project_id)
-    project["messages"] = req.messages
+    if req.messages:
+        project["messages"] = req.messages
+    if req.workspace_path is not None:
+        project["workspace_path"] = req.workspace_path
     _save_project(project_id, project)
     return {"ok": True}
 
@@ -435,6 +443,46 @@ def delete_memory(project_id: str, memory_id: str):
     memories = [m for m in memories if m["id"] != memory_id]
     _save_memories(project_id, memories)
     return {"ok": True}
+
+# ── Workspace API ─────────────────────────────────────────
+
+@app.get("/api/projects/{project_id}/workspace")
+def list_workspace_files(project_id: str):
+    project = _load_project(project_id)
+    path_str = project.get("workspace_path")
+    if not path_str:
+        return {"files": [], "linked": False}
+    path = Path(path_str).expanduser().resolve()
+    if not path.exists() or not path.is_dir():
+        return {"files": [], "linked": True, "error": "Path not found or not a directory"}
+    files = []
+    for f in sorted(path.iterdir()):
+        if f.is_file() and f.stat().st_size < 10 * 1024 * 1024:  # Skip files > 10MB
+            files.append({
+                "name": f.name,
+                "size": f.stat().st_size,
+                "modified": datetime.fromtimestamp(f.stat().st_mtime).isoformat(),
+            })
+    return {"files": files, "linked": True, "path": str(path)}
+
+@app.get("/api/projects/{project_id}/workspace/{filename}")
+def read_workspace_file(project_id: str, filename: str):
+    project = _load_project(project_id)
+    path_str = project.get("workspace_path")
+    if not path_str:
+        raise HTTPException(status_code=404, detail="No workspace linked")
+    base = Path(path_str).expanduser().resolve()
+    path = base / filename
+    # Security: prevent path traversal
+    try:
+        path.relative_to(base)
+    except ValueError:
+        raise HTTPException(status_code=403, detail="Access denied")
+    if not path.exists() or not path.is_file():
+        raise HTTPException(status_code=404, detail="File not found")
+    if path.stat().st_size > 2 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="File too large")
+    return {"content": path.read_text(encoding="utf-8", errors="replace")}
 
 # ── Plugin API ──────────────────────────────────────────────
 

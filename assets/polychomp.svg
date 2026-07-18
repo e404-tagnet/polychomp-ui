@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1e1e2e"/>
+      <stop offset="100%" stop-color="#11111b"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="28" fill="url(#bg)"/>
+  <!-- P centered in left half -->
+  <text x="64" y="128" text-anchor="middle" dominant-baseline="central"
+        font-family="Montserrat, Arial Black, Impact, Arial, sans-serif"
+        font-size="160" font-weight="800" fill="#89dceb">P</text>
+  <!-- C centered in right half -->
+  <text x="192" y="128" text-anchor="middle" dominant-baseline="central"
+        font-family="Montserrat, Arial Black, Impact, Arial, sans-serif"
+        font-size="160" font-weight="800" fill="#94e2d5">C</text>
+</svg>

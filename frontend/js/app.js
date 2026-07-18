@@ -847,6 +847,22 @@ function setupEventListeners() {
   document.getElementById("close-settings").addEventListener("click", closeSettings);
   document.getElementById("save-settings").addEventListener("click", saveSettings);
 
+  // Settings tab switching
+  document.querySelectorAll(".setting-tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      const target = tab.dataset.tab;
+      document.querySelectorAll(".setting-tab").forEach(t => t.classList.remove("active"));
+      tab.classList.add("active");
+      document.querySelectorAll(".setting-panel").forEach(p => p.classList.remove("active"));
+      document.getElementById(`tab-${target}`)?.classList.add("active");
+    });
+  });
+  // Open plugin manager from settings
+  document.getElementById("settings-open-plugins")?.addEventListener("click", () => {
+    closeSettings();
+    openPluginsModal();
+  });
+
   document.getElementById("new-project-btn").addEventListener("click", openNewProject);
   document.getElementById("close-new-project").addEventListener("click", closeNewProject);
   document.getElementById("create-project").addEventListener("click", () => {

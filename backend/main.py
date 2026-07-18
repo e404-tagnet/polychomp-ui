@@ -62,7 +62,7 @@ class UserProfile(BaseModel):
     prism_visibility: str      # visible / hidden
     temperature_preference: str # cautious / balanced / creative
     privacy_default: str       # local / hybrid / cloud
-    cross_project_memory: bool # true / false
+    system_prompt: Optional[str] = None  # custom or built system prompt
 
 class ChatMessage(BaseModel):
     role: str

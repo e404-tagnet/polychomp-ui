@@ -45,15 +45,18 @@ async function checkProfile() {
   const res = await fetch(`${API_BASE}/api/profile`);
   const data = await res.json();
   if (data.exists) {
-    const p = data.profile;
-    if (p.privacy_default) settings.privacy = p.privacy_default;
-    if (p.temperature_preference) {
-      settings.temperature = p.temperature_preference === "cautious" ? 0.2 : p.temperature_preference === "creative" ? 0.8 : 0.5;
-    }
-    if (p.prism_visibility) {
-      settings.analysisVisible = p.prism_visibility === "visible";
-    }
-    return p;
+  const p = data.profile;
+  if (p.privacy_default) settings.privacy = p.privacy_default;
+  if (p.temperature_preference) {
+    settings.temperature = p.temperature_preference === "cautious" ? 0.2 : p.temperature_preference === "creative" ? 0.8 : 0.5;
+  }
+  if (p.prism_visibility) {
+    settings.analysisVisible = p.prism_visibility === "visible";
+  }
+  if (p.system_prompt) {
+    settings.systemPrompt = p.system_prompt;
+  }
+  return p;
   }
   return null;
 }
@@ -68,6 +71,46 @@ function closeOnboarding() {
 
 async function saveOnboarding() {
   const getVal = (name) => document.querySelector(`input[name="${name}"]:checked`)?.value;
+  const getText = (name) => document.querySelector(`input[name="${name}"]`)?.value?.trim() || "";
+  const getChecked = (name) => Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map(el => el.value);
+
+  const promptMode = getVal("q10_prompt_mode");
+  let systemPrompt = "";
+
+  if (promptMode === "custom") {
+    systemPrompt = document.getElementById("custom-system-prompt").value.trim();
+  } else {
+    // Build prompt from guided answers
+    const role = getText("q10a_role");
+    const focus = getText("q10b_focus");
+    const tone = getVal("q10c_tone");
+    const avoid = getChecked("q10d_avoid");
+    const extra = document.querySelector(`textarea[name="q10e_extra"]`)?.value?.trim() || "";
+
+    const parts = [];
+    if (role) parts.push(`You are assisting a ${role}.`);
+    if (focus) parts.push(`Their main focus is ${focus}.`);
+    if (tone) {
+      const toneMap = {
+        professional: "Be professional and concise.",
+        casual: "Be casual and friendly.",
+        mentor: "Be mentor-like — teach them as you go, explain concepts clearly.",
+        peer: "Be collaborative and treat them as a peer — no hierarchy."
+      };
+      parts.push(toneMap[tone] || "");
+    }
+    if (avoid.length) {
+      const avoidMap = {
+        jargon: "unnecessary jargon",
+        assumptions: "making assumptions about the user's knowledge",
+        verbose: "being overly verbose",
+        apologies: "excessive apologies"
+      };
+      parts.push(`Avoid ${avoid.map(a => avoidMap[a]).join(", ")}.`);
+    }
+    if (extra) parts.push(extra);
+    systemPrompt = parts.join("\n");
+  }
 
   const profile = {
     technical_level: getVal("q1"),
@@ -79,7 +122,7 @@ async function saveOnboarding() {
     prism_visibility: getVal("q7"),
     temperature_preference: getVal("q8"),
     privacy_default: getVal("q9"),
-    cross_project_memory: getVal("q10") === "true",
+    system_prompt: systemPrompt,
   };
 
   await fetch(`${API_BASE}/api/profile`, {
@@ -91,8 +134,68 @@ async function saveOnboarding() {
   settings.privacy = profile.privacy_default;
   settings.temperature = profile.temperature_preference === "cautious" ? 0.2 : profile.temperature_preference === "creative" ? 0.8 : 0.5;
   settings.analysisVisible = profile.prism_visibility === "visible";
+  settings.systemPrompt = systemPrompt;
   updateModelStatus();
   closeOnboarding();
+}
+
+function buildPromptPreview() {
+  const promptMode = document.querySelector('input[name="q10_prompt_mode"]:checked')?.value || "guided";
+  let systemPrompt = "";
+
+  if (promptMode === "custom") {
+    systemPrompt = document.getElementById("custom-system-prompt")?.value?.trim() || "(empty)";
+  } else {
+    const getText = (name) => document.querySelector(`input[name="${name}"]`)?.value?.trim() || "";
+    const getVal = (name) => document.querySelector(`input[name="${name}"]:checked`)?.value;
+    const getChecked = (name) => Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map(el => el.value);
+
+    const role = getText("q10a_role");
+    const focus = getText("q10b_focus");
+    const tone = getVal("q10c_tone");
+    const avoid = getChecked("q10d_avoid");
+    const extra = document.querySelector(`textarea[name="q10e_extra"]`)?.value?.trim() || "";
+
+    const parts = [];
+    if (role) parts.push(`You are assisting a ${role}.`);
+    if (focus) parts.push(`Their main focus is ${focus}.`);
+    if (tone) {
+      const toneMap = {
+        professional: "Be professional and concise.",
+        casual: "Be casual and friendly.",
+        mentor: "Be mentor-like — teach them as you go, explain concepts clearly.",
+        peer: "Be collaborative and treat them as a peer — no hierarchy."
+      };
+      parts.push(toneMap[tone] || "");
+    }
+    if (avoid.length) {
+      const avoidMap = {
+        jargon: "unnecessary jargon",
+        assumptions: "making assumptions about the user's knowledge",
+        verbose: "being overly verbose",
+        apologies: "excessive apologies"
+      };
+      parts.push(`Avoid ${avoid.map(a => avoidMap[a]).join(", ")}.`);
+    }
+    if (extra) parts.push(extra);
+    systemPrompt = parts.length ? parts.join("\n") : "(answer the guided questions to build your prompt)";
+  }
+
+  document.getElementById("prompt-preview").classList.remove("hidden");
+  document.getElementById("prompt-preview-text").textContent = systemPrompt;
+}
+
+function togglePromptMode() {
+  const mode = document.querySelector('input[name="q10_prompt_mode"]:checked')?.value;
+  const customBox = document.getElementById("custom-prompt-box");
+  const guidedBox = document.getElementById("guided-prompt-box");
+  if (mode === "custom") {
+    customBox.classList.remove("hidden");
+    guidedBox.classList.add("hidden");
+  } else {
+    customBox.classList.add("hidden");
+    guidedBox.classList.remove("hidden");
+  }
 }
 
 // ── Plugin Manager ────────────────────────────────────────
@@ -509,6 +612,12 @@ function setupEventListeners() {
 
   document.getElementById("close-onboarding").addEventListener("click", closeOnboarding);
   document.getElementById("save-onboarding").addEventListener("click", saveOnboarding);
+
+  // Prompt mode toggle
+  document.querySelectorAll('input[name="q10_prompt_mode"]').forEach(el => {
+    el.addEventListener("change", togglePromptMode);
+  });
+  document.getElementById("preview-prompt-btn")?.addEventListener("click", buildPromptPreview);
 
   document.getElementById("plugins-btn").addEventListener("click", openPluginManager);
   document.getElementById("close-plugins").addEventListener("click", closePluginManager);

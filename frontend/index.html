@@ -238,15 +238,58 @@
           <label><input type="radio" name="q9" value="cloud"> Cloud OK — I'm fine with remote inference</label>
         </div>
 
-        <!-- Q10 -->
+        <!-- Q10: System Prompt Builder -->
         <div class="onboarding-q">
-          <h4>10. Should core memory (who you are, your preferences) carry across projects?</h4>
-          <label><input type="radio" name="q10" value="true" checked> Yes — Polychomp should learn me over time</label>
-          <label><input type="radio" name="q10" value="false"> No — keep each project isolated</label>
+          <h4>10. System Prompt</h4>
+          <p style="color:var(--overlay0);font-size:.8rem;margin:.3rem 0 .5rem;">This shapes how the assistant behaves across all conversations.</p>
+          <label><input type="radio" name="q10_prompt_mode" value="custom" id="prompt-mode-custom"> I know what I'm doing — let me type my own</label>
+          <label><input type="radio" name="q10_prompt_mode" value="guided" id="prompt-mode-guided" checked> Guide me — build one from my answers</label>
+
+          <!-- Custom prompt textarea (hidden by default) -->
+          <div id="custom-prompt-box" class="hidden" style="margin-top:.75rem;">
+            <textarea id="custom-system-prompt" rows="4" placeholder="Enter your system prompt here..."></textarea>
+          </div>
+
+          <!-- Guided builder questions -->
+          <div id="guided-prompt-box" style="margin-top:.75rem;">
+            <div class="onboarding-q sub-q">
+              <h5>10a. What is your role or occupation?</h5>
+              <input type="text" name="q10a_role" placeholder="e.g. software engineer, writer, student...">
+            </div>
+            <div class="onboarding-q sub-q">
+              <h5>10b. What are you mainly building or working on?</h5>
+              <input type="text" name="q10b_focus" placeholder="e.g. web apps, fiction, research papers...">
+            </div>
+            <div class="onboarding-q sub-q">
+              <h5>10c. What tone do you prefer from the assistant?</h5>
+              <label><input type="radio" name="q10c_tone" value="professional" checked> Professional and concise</label>
+              <label><input type="radio" name="q10c_tone" value="casual"> Casual and friendly</label>
+              <label><input type="radio" name="q10c_tone" value="mentor"> Mentor-like — teach me as we go</label>
+              <label><input type="radio" name="q10c_tone" value="peer"> Peer — collaborative, no hierarchy</label>
+            </div>
+            <div class="onboarding-q sub-q">
+              <h5>10d. What should the system avoid?</h5>
+              <label><input type="checkbox" name="q10d_avoid" value="jargon"> Unnecessary jargon</label>
+              <label><input type="checkbox" name="q10d_avoid" value="assumptions"> Making assumptions about my knowledge</label>
+              <label><input type="checkbox" name="q10d_avoid" value="verbose"> Being overly verbose</label>
+              <label><input type="checkbox" name="q10d_avoid" value="apologies"> Excessive apologies</label>
+            </div>
+            <div class="onboarding-q sub-q">
+              <h5>10e. Any specific instructions? (optional)</h5>
+              <textarea name="q10e_extra" rows="2" placeholder="e.g. Always suggest alternatives, Ask before making changes..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Preview of built prompt -->
+        <div id="prompt-preview" class="hidden" style="margin-top:1rem;padding:.75rem;background:var(--surface0);border-radius:6px;">
+          <h5 style="color:var(--teal);margin-bottom:.5rem;">Preview:</h5>
+          <pre id="prompt-preview-text" style="white-space:pre-wrap;font-size:.8rem;color:var(--text);margin:0;"></pre>
         </div>
 
       </div>
       <footer class="modal-footer">
+        <button class="btn btn-ghost" id="preview-prompt-btn">Preview Prompt</button>
         <button class="btn btn-primary" id="save-onboarding">Save Profile &amp; Continue</button>
       </footer>
     </div>

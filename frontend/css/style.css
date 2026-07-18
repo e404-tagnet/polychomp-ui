@@ -190,6 +190,14 @@ html, body { height: 100%; font-family: var(--font-sans); background: var(--crus
 .temp-slider input[type="range"] { flex: 1; accent-color: var(--sapphire); }
 .temp-slider span { font-size: .8rem; color: var(--subtext0); min-width: 80px; }
 
+/* ── Sub-questions in onboarding ───────────── */
+.onboarding-q.sub-q { padding-left: 1rem; border-left: 2px solid var(--surface0); margin-top: .75rem; }
+.onboarding-q.sub-q h5 { color: var(--teal); font-size: .82rem; margin-bottom: .4rem; }
+.onboarding-q input[type="text"] { width: 100%; padding: .5rem .6rem; background: var(--surface0); border: 1px solid var(--surface1); border-radius: 6px; color: var(--text); font-size: .85rem; margin-top: .25rem; }
+.onboarding-q input[type="text"]:focus { border-color: var(--sapphire); outline: none; }
+#prompt-preview { border: 1px solid var(--surface1); }
+#prompt-preview-text { font-family: ui-monospace, SFMono-Regular, monospace; line-height: 1.5; }
+
 /* Responsive */
 @media (max-width: 768px) {
   #app { grid-template-columns: 0 1fr 0; }

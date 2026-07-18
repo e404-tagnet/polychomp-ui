@@ -299,6 +299,17 @@ async function selectProject(pid) {
   renderMessages();
   renderProjects();
   loadWorkspace();
+
+  // Show project tabs and reset to chat view
+  const tabBar = document.getElementById("project-tabs");
+  if (tabBar) tabBar.classList.remove("hidden");
+  switchProjectView("chat");
+
+  // Load context fields
+  const ctx = currentProject.context || {};
+  document.getElementById("overview-text").value = ctx.overview || "";
+  document.getElementById("plan-text").value = ctx.plan || "";
+  document.getElementById("review-text").value = ctx.review || "";
 }
 
 async function createProject(name, description, workspacePath = null) {
@@ -580,6 +591,32 @@ function fmtBytes(b) {
   if (b < 1024) return `${b}B`;
   if (b < 1024 * 1024) return `${Math.round(b / 1024)}KB`;
   return `${Math.round(b / (1024 * 1024))}MB`;
+}
+
+// ── Project Views (Overview / Plan / Review) ──────────────
+let currentProjectView = "chat";
+
+function switchProjectView(view) {
+  currentProjectView = view;
+  document.querySelectorAll(".project-view").forEach(v => v.classList.remove("active"));
+  document.querySelectorAll(".project-tab").forEach(t => t.classList.remove("active"));
+  document.getElementById(`view-${view}`)?.classList.add("active");
+  document.querySelector(`.project-tab[data-view="${view}"]`)?.classList.add("active");
+  // Hide route guide and input bar for non-chat views
+  const routeGuide = document.getElementById("route-guide");
+  if (routeGuide) routeGuide.style.display = view === "chat" ? "" : "none";
+}
+
+async function saveProjectContext(field) {
+  if (!currentProject) return;
+  const value = document.getElementById(`${field}-text`)?.value || "";
+  await fetch(`${API_BASE}/api/projects/${currentProject.id}/context`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ [field]: value }),
+  });
+  currentProject.context = currentProject.context || {};
+  currentProject.context[field] = value;
 }
 
 // ── Workspace ──────────────────────────────────────────────
@@ -917,6 +954,18 @@ function setupEventListeners() {
     const chip = e.target.closest(".workspace-file");
     if (!chip) return;
     injectFileIntoChat(chip.dataset.fname);
+  });
+
+  // Project view tabs (Chat / Overview / Plan / Review)
+  document.querySelectorAll(".project-tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      switchProjectView(tab.dataset.view);
+    });
+  });
+
+  // Save context buttons
+  ["overview", "plan", "review"].forEach(field => {
+    document.getElementById(`save-${field}`)?.addEventListener("click", () => saveProjectContext(field));
   });
 }
 

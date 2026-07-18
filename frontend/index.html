@@ -32,6 +32,12 @@
       <header id="chat-header" class="chat-header">
         <div>
           <h2 id="project-name">Select a project</h2>
+          <div id="project-tabs" class="project-tabs hidden">
+            <button class="project-tab active" data-view="chat">Chat</button>
+            <button class="project-tab" data-view="overview">Overview</button>
+            <button class="project-tab" data-view="plan">Plan</button>
+            <button class="project-tab" data-view="review">Review</button>
+          </div>
           <div id="workspace-bar" class="workspace-bar hidden">
             <span class="workspace-label">Workspace:</span>
             <span id="workspace-path" class="workspace-path"></span>
@@ -66,8 +72,10 @@
         <span class="route-dot route-digress" data-tooltip="Change topic">digress</span>
         <span class="route-dot route-end" data-tooltip="Wrap up">end</span>
       </div>
-      <div id="messages" class="messages"></div>
-      <footer class="chat-footer">
+      <!-- Views: Chat | Overview | Plan | Review -->
+      <div id="view-chat" class="project-view active">
+        <div id="messages" class="messages"></div>
+        <footer class="chat-footer">
         <div class="input-bar">
           <textarea id="message-input" rows="1" placeholder="Message Prism-UI…"></textarea>
           <button id="send-btn" class="btn btn-primary">
@@ -76,7 +84,44 @@
         </div>
         <div id="model-status" class="model-status">Local - phi4-mini - Analysis shadow</div>
       </footer>
-    </main>
+    </div>
+
+    <!-- Overview View -->
+    <div id="view-overview" class="project-view">
+      <div class="view-header">
+        <h3>Project Overview</h3>
+        <p style="color:var(--overlay0);font-size:.8rem;">A living summary of the project. Update as work progresses.</p>
+      </div>
+      <textarea id="overview-text" placeholder="What is this project about? What have you learned so far?"></textarea>
+      <div class="view-actions">
+        <button class="btn btn-primary btn-sm" id="save-overview">Save Overview</button>
+      </div>
+    </div>
+
+    <!-- Plan View -->
+    <div id="view-plan" class="project-view">
+      <div class="view-header">
+        <h3>Project Plan</h3>
+        <p style="color:var(--overlay0);font-size:.8rem;">Goals, milestones, and next steps.</p>
+      </div>
+      <textarea id="plan-text" placeholder="What needs to happen? What's the timeline?"></textarea>
+      <div class="view-actions">
+        <button class="btn btn-primary btn-sm" id="save-plan">Save Plan</button>
+      </div>
+    </div>
+
+    <!-- Review View -->
+    <div id="view-review" class="project-view">
+      <div class="view-header">
+        <h3>Project Review</h3>
+        <p style="color:var(--overlay0);font-size:.8rem;">Reflections, lessons learned, and outcomes.</p>
+      </div>
+      <textarea id="review-text" placeholder="What worked? What didn't? What would you do differently?"></textarea>
+      <div class="view-actions">
+        <button class="btn btn-primary btn-sm" id="save-review">Save Review</button>
+      </div>
+    </div>
+  </main>
 
     <!-- Chat Analysis Panel (hidden by default) -->
     <aside id="analysis-panel" class="analysis-panel hidden">

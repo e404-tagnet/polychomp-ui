@@ -1,6 +1,6 @@
 /**
  * Polychomp-UI Frontend
- * Catppuccin Mocha, dark mode, PRISM inspector
+ * Catppuccin Mocha, dark mode, Chat Analysis
  */
 
 const API_BASE = window.location.origin;
@@ -12,7 +12,9 @@ let settings = {
   usePrism: true,
   prismMode: "shadow",
   privacy: "local",
-  prismVisible: false,
+  analysisVisible: false,
+  temperature: 0.5,
+  systemPrompt: "",
 };
 
 // ── DOM refs ────────────────────────────────────────────────
@@ -21,8 +23,8 @@ const messages       = document.getElementById("messages");
 const messageInput   = document.getElementById("message-input");
 const sendBtn        = document.getElementById("send-btn");
 const projectName    = document.getElementById("project-name");
-const prismPanel     = document.getElementById("prism-panel");
-const prismContent   = document.getElementById("prism-content");
+const analysisPanel  = document.getElementById("analysis-panel");
+const analysisContent = document.getElementById("analysis-content");
 const appRoot        = document.getElementById("app");
 const modelStatus    = document.getElementById("model-status");
 
@@ -43,14 +45,13 @@ async function checkProfile() {
   const res = await fetch(`${API_BASE}/api/profile`);
   const data = await res.json();
   if (data.exists) {
-    // Apply profile defaults to settings
     const p = data.profile;
     if (p.privacy_default) settings.privacy = p.privacy_default;
     if (p.temperature_preference) {
-      settings.temperature = p.temperature_preference === "cautious" ? 0.3 : p.temperature_preference === "creative" ? 0.8 : 0.5;
+      settings.temperature = p.temperature_preference === "cautious" ? 0.2 : p.temperature_preference === "creative" ? 0.8 : 0.5;
     }
     if (p.prism_visibility) {
-      settings.prismVisible = p.prism_visibility === "visible";
+      settings.analysisVisible = p.prism_visibility === "visible";
     }
     return p;
   }
@@ -67,7 +68,7 @@ function closeOnboarding() {
 
 async function saveOnboarding() {
   const getVal = (name) => document.querySelector(`input[name="${name}"]:checked`)?.value;
-  
+
   const profile = {
     technical_level: getVal("q1"),
     interaction_style: getVal("q2"),
@@ -80,17 +81,16 @@ async function saveOnboarding() {
     privacy_default: getVal("q9"),
     cross_project_memory: getVal("q10") === "true",
   };
-  
+
   await fetch(`${API_BASE}/api/profile`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(profile),
   });
-  
-  // Apply locally
+
   settings.privacy = profile.privacy_default;
-  settings.temperature = profile.temperature_preference === "cautious" ? 0.3 : profile.temperature_preference === "creative" ? 0.8 : 0.5;
-  settings.prismVisible = profile.prism_visibility === "visible";
+  settings.temperature = profile.temperature_preference === "cautious" ? 0.2 : profile.temperature_preference === "creative" ? 0.8 : 0.5;
+  settings.analysisVisible = profile.prism_visibility === "visible";
   updateModelStatus();
   closeOnboarding();
 }
@@ -230,11 +230,11 @@ function renderMessages() {
 
 function appendMessage(role, content, prismMeta, animate = true) {
   const wrapper = document.createElement("div");
-  wrapper.className = `message ${role}` + (animate ? "" : "");
+  wrapper.className = `message ${role}`;
 
   let chip = "";
   if (prismMeta && role === "user") {
-    chip = `<button class="prism-chip route-${prismMeta.route}" data-meta='${JSON.stringify(prismMeta).replace(/'/g, "&#39;")}' title="Inspect PRISM analysis">${prismMeta.route} · ${Math.round(prismMeta.confidence * 100)}%</button>`;
+    chip = `<button class="prism-chip route-${prismMeta.route}" data-meta='${JSON.stringify(prismMeta).replace(/'/g, "&#39;")}' title="Inspect analysis">${prismMeta.route} - ${Math.round(prismMeta.confidence * 100)}%</button>`;
   }
 
   wrapper.innerHTML = `
@@ -245,13 +245,12 @@ function appendMessage(role, content, prismMeta, animate = true) {
     </div>
   `;
 
-  // Wire chip click to inspector
   const chipBtn = wrapper.querySelector(".prism-chip");
   if (chipBtn) {
     chipBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       const meta = JSON.parse(chipBtn.dataset.meta);
-      showPrismInspector(meta);
+      showAnalysisInspector(meta);
     });
   }
 
@@ -259,44 +258,72 @@ function appendMessage(role, content, prismMeta, animate = true) {
   messages.scrollTop = messages.scrollHeight;
 }
 
-// ── PRISM Inspector ────────────────────────────────────────
-function showPrismInspector(meta) {
+// ── Typewriter Effect ──────────────────────────────────────
+async function typewriterText(element, text, speedMs = 30) {
+  const words = text.split(/(\s+)/); // keep whitespace
+  let html = "";
+  element.innerHTML = "";
+  element.classList.add("typewriter-cursor");
+
+  for (let i = 0; i < words.length; i++) {
+    html += escapeHtml(words[i]);
+    element.innerHTML = html;
+    messages.scrollTop = messages.scrollHeight;
+    await sleep(speedMs);
+  }
+
+  element.classList.remove("typewriter-cursor");
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// ── Chat Analysis Panel ────────────────────────────────────
+function showAnalysisInspector(meta, tokenCount = 0, latencyMs = 0) {
   if (!meta) return;
-  appRoot.classList.add("prism-open");
-  prismPanel.classList.remove("hidden");
+  appRoot.classList.add("analysis-open");
+  analysisPanel.classList.remove("hidden");
 
   const confClass = meta.confidence >= 0.7 ? "conf-high" : meta.confidence >= 0.4 ? "conf-med" : "conf-low";
 
-  prismContent.innerHTML = `
-    <div class="prism-block">
+  analysisContent.innerHTML = `
+    <div class="analysis-block">
       <h4>Bias Detected</h4>
-      <div class="prism-val bias">${meta.bias}</div>
+      <div class="analysis-val bias">${meta.bias}</div>
     </div>
-    <div class="prism-block">
+    <div class="analysis-block">
       <h4>Confidence</h4>
-      <div class="prism-val ${confClass}">${(meta.confidence * 100).toFixed(1)}%</div>
+      <div class="analysis-val ${confClass}">${(meta.confidence * 100).toFixed(1)}%</div>
     </div>
-    <div class="prism-block">
+    <div class="analysis-block">
       <h4>Recommended Route</h4>
-      <div class="prism-val route-${meta.route}">${meta.route.toUpperCase()}</div>
+      <div class="analysis-val route-${meta.route}">${meta.route.toUpperCase()}</div>
       <p style="margin-top:.4rem;color:var(--overlay0);font-size:.75rem;">${meta.reason}</p>
     </div>
-    <div class="prism-block">
+    <div class="analysis-block">
       <h4>Session Metrics</h4>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.3rem;">
-        <div><span style="color:var(--overlay0)">Temp</span><br><span class="prism-val">${meta.temperature}</span></div>
-        <div><span style="color:var(--overlay0)">Assertive</span><br><span class="prism-val">${meta.assertiveness}</span></div>
-        <div><span style="color:var(--overlay0)">Topic Drift</span><br><span class="prism-val">${meta.topic_drift}</span></div>
-        <div><span style="color:var(--overlay0)">Factual</span><br><span class="prism-val">${meta.factual ? "Yes" : "No"}</span></div>
+        <div><span style="color:var(--overlay0)">Temp</span><br><span class="analysis-val">${meta.temperature}</span></div>
+        <div><span style="color:var(--overlay0)">Assertive</span><br><span class="analysis-val">${meta.assertiveness}</span></div>
+        <div><span style="color:var(--overlay0)">Topic Drift</span><br><span class="analysis-val">${meta.topic_drift}</span></div>
+        <div><span style="color:var(--overlay0)">Factual</span><br><span class="analysis-val">${meta.factual ? "Yes" : "No"}</span></div>
+      </div>
+    </div>
+    <div class="analysis-block">
+      <h4>Tokens</h4>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.3rem;">
+        <div><span style="color:var(--overlay0)">Total</span><br><span class="analysis-val">${tokenCount > 0 ? tokenCount : '--'}</span></div>
+        <div><span style="color:var(--overlay0)">Latency</span><br><span class="analysis-val">${latencyMs > 0 ? latencyMs + 'ms' : '--'}</span></div>
       </div>
     </div>
   `;
 }
 
-function hidePrismInspector() {
-  appRoot.classList.remove("prism-open");
-  prismPanel.classList.add("hidden");
-  prismContent.innerHTML = `<p class="prism-placeholder">Select a message to inspect.</p>`;
+function hideAnalysisInspector() {
+  appRoot.classList.remove("analysis-open");
+  analysisPanel.classList.add("hidden");
+  analysisContent.innerHTML = `<p class="analysis-placeholder">Send a message to see analysis.</p>`;
 }
 
 // ── Send Message ───────────────────────────────────────────
@@ -308,11 +335,19 @@ async function sendMessage() {
   messageInput.style.height = "auto";
   appendMessage("user", text, null, true);
 
-  // Show typing indicator
+  // Show animated thinking indicator
   const typing = document.createElement("div");
   typing.className = "message assistant";
   typing.id = "typing";
-  typing.innerHTML = `<div class="message-bubble" style="opacity:.6;">…</div>`;
+  typing.innerHTML = `
+    <div class="message-bubble">
+      <div class="thinking-bubble">
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+      </div>
+    </div>
+  `;
   messages.appendChild(typing);
   messages.scrollTop = messages.scrollHeight;
 
@@ -327,16 +362,45 @@ async function sendMessage() {
         model_name: settings.modelName,
         use_prism: settings.usePrism,
         mode: settings.prismMode,
+        temperature: settings.temperature,
+        system_prompt: settings.systemPrompt || undefined,
       }),
     });
     const data = await res.json();
 
     typing.remove();
-    appendMessage("assistant", data.response, data.prism_meta, true);
+
+    // Create empty assistant bubble for typewriter
+    const wrapper = document.createElement("div");
+    wrapper.className = "message assistant";
+    const bubble = document.createElement("div");
+    bubble.className = "message-bubble";
+    wrapper.appendChild(bubble);
+    messages.appendChild(wrapper);
+    messages.scrollTop = messages.scrollHeight;
+
+    // Typewriter effect at 30ms
+    await typewriterText(bubble, data.response, 30);
+
+    // Add meta row after typing
+    const metaDiv = document.createElement("div");
+    metaDiv.className = "message-meta";
+    metaDiv.innerHTML = `<span class="ts">${fmtTime()}</span>`;
+    wrapper.appendChild(metaDiv);
+
+    // Auto-show analysis if panel is open
+    if (data.prism_meta && !analysisPanel.classList.contains("hidden")) {
+      showAnalysisInspector(data.prism_meta, data.token_count || 0, data.latency_ms || 0);
+    }
 
     // Refresh project state
     currentProject.messages.push({ role: "user", content: text, prism_meta: data.prism_meta });
     currentProject.messages.push({ role: "assistant", content: data.response });
+
+    // Auto-show analysis panel on first message if user prefers visible
+    if (data.prism_meta && settings.analysisVisible && analysisPanel.classList.contains("hidden")) {
+      showAnalysisInspector(data.prism_meta, data.token_count || 0, data.latency_ms || 0);
+    }
 
   } catch (err) {
     typing.remove();
@@ -353,7 +417,36 @@ function loadSettings() {
   document.getElementById("use-prism").checked = settings.usePrism;
   document.getElementById("prism-mode").value = settings.prismMode;
   document.querySelector(`input[name="privacy"][value="${settings.privacy}"]`).checked = true;
+
+  // Temperature slider
+  const tempSlider = document.getElementById("temperature");
+  if (tempSlider) {
+    tempSlider.value = Math.round(settings.temperature * 100);
+    updateTempLabel(settings.temperature);
+    tempSlider.addEventListener("input", () => {
+      const val = tempSlider.value / 100;
+      updateTempLabel(val);
+    });
+  }
+
+  // System prompt
+  const sysPrompt = document.getElementById("system-prompt");
+  if (sysPrompt) sysPrompt.value = settings.systemPrompt || "";
+
   updateModelStatus();
+}
+
+function updateTempLabel(val) {
+  const labels = [
+    { max: 0.15, text: "Very Cautious" },
+    { max: 0.35, text: "Cautious" },
+    { max: 0.55, text: "Balanced" },
+    { max: 0.75, text: "Exploratory" },
+    { max: 1.0, text: "Creative" },
+  ];
+  const label = labels.find(l => val <= l.max)?.text || "Balanced";
+  const el = document.getElementById("temp-label");
+  if (el) el.textContent = label;
 }
 
 function saveSettings() {
@@ -362,6 +455,10 @@ function saveSettings() {
   settings.usePrism = document.getElementById("use-prism").checked;
   settings.prismMode = document.getElementById("prism-mode").value;
   settings.privacy = document.querySelector("input[name=\"privacy\"]:checked").value;
+  const tempSlider = document.getElementById("temperature");
+  if (tempSlider) settings.temperature = tempSlider.value / 100;
+  const sysPrompt = document.getElementById("system-prompt");
+  if (sysPrompt) settings.systemPrompt = sysPrompt.value;
   localStorage.setItem("polychomp-settings", JSON.stringify(settings));
   updateModelStatus();
   closeSettings();
@@ -369,7 +466,8 @@ function saveSettings() {
 
 function updateModelStatus() {
   const priv = settings.privacy === "local" ? "Local" : settings.privacy === "hybrid" ? "Hybrid" : "Cloud";
-  modelStatus.textContent = `${priv} · ${settings.modelName} · PRISM ${settings.prismMode}`;
+  const tempLabel = settings.temperature <= 0.3 ? "Cautious" : settings.temperature >= 0.7 ? "Creative" : "Balanced";
+  modelStatus.textContent = `${priv} - ${settings.modelName} - Analysis ${settings.prismMode} - ${tempLabel}`;
 }
 
 // ── Event Listeners ─────────────────────────────────────────
@@ -383,15 +481,15 @@ function setupEventListeners() {
     messageInput.style.height = messageInput.scrollHeight + "px";
   });
 
-  document.getElementById("prism-toggle").addEventListener("click", () => {
-    if (prismPanel.classList.contains("hidden")) {
-      appRoot.classList.add("prism-open");
-      prismPanel.classList.remove("hidden");
+  document.getElementById("analysis-toggle").addEventListener("click", () => {
+    if (analysisPanel.classList.contains("hidden")) {
+      appRoot.classList.add("analysis-open");
+      analysisPanel.classList.remove("hidden");
     } else {
-      hidePrismInspector();
+      hideAnalysisInspector();
     }
   });
-  document.getElementById("prism-close").addEventListener("click", hidePrismInspector);
+  document.getElementById("analysis-close").addEventListener("click", hideAnalysisInspector);
 
   document.getElementById("settings-btn").addEventListener("click", openSettings);
   document.getElementById("close-settings").addEventListener("click", closeSettings);

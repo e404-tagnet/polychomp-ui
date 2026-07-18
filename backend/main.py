@@ -76,6 +76,8 @@ class ChatRequest(BaseModel):
     model_name: str = "phi4-mini"
     use_prism: bool = True
     mode: str = "shadow"  # shadow | active
+    temperature: Optional[float] = None  # override PRISM temperature
+    system_prompt: Optional[str] = None  # custom system prompt
 
 class ProjectCreate(BaseModel):
     name: str
@@ -256,24 +258,38 @@ def chat(req: ChatRequest):
         req.message = modified_message  # plugins may rewrite or intercept
 
     # ── LLM Response via Ollama ──
-    llm_response = "[LLM unavailable — PRISM shadow mode only]"
+    llm_response = "[LLM unavailable — Analysis shadow mode only]"
+    token_count = 0
+    latency_ms = 0
     try:
-        import requests
+        import requests, time
         ollama_url = f"{req.model_endpoint.rstrip('/')}/api/generate"
+        
+        # Temperature: use override, then PRISM, then default
+        temp = req.temperature if req.temperature is not None else (prism_meta["temperature"] if prism_meta else 0.7)
+        
+        # Build system prompt
+        system_parts = []
+        if req.system_prompt:
+            system_parts.append(req.system_prompt)
+        if req.mode == "active" and prism_meta:
+            system_parts.append(f"[{prism_meta['route'].upper()} MODE: {prism_meta['reason']}]")
+        
         ollama_payload = {
             "model": req.model_name,
             "prompt": req.message,
             "stream": False,
-            "options": {"temperature": prism_meta["temperature"] if prism_meta else 0.7},
+            "options": {"temperature": temp},
         }
-        # If PRISM is active, prepend route suggestion to system prompt area
-        if req.mode == "active" and prism_meta:
-            route_addition = f"[{prism_meta['route'].upper()} MODE: {prism_meta['reason']}]"
-            ollama_payload["system"] = route_addition
+        if system_parts:
+            ollama_payload["system"] = "\n".join(system_parts)
 
+        t0 = time.time()
         ollama_resp = requests.post(ollama_url, json=ollama_payload, timeout=60)
+        latency_ms = round((time.time() - t0) * 1000)
         ollama_data = ollama_resp.json()
         llm_response = ollama_data.get("response", llm_response)
+        token_count = ollama_data.get("eval_count", 0) + ollama_data.get("prompt_eval_count", 0)
     except Exception as e:
         llm_response = f"[Ollama error: {e}]"
 
@@ -295,13 +311,17 @@ def chat(req: ChatRequest):
     project["messages"].append({
         "role": "assistant",
         "content": llm_response,
+        "token_count": token_count,
+        "latency_ms": latency_ms,
         "timestamp": datetime.utcnow().isoformat(),
     })
     _save_project(req.project_id, project)
-    
+
     return {
         "response": llm_response,
         "prism_meta": prism_meta,
+        "token_count": token_count,
+        "latency_ms": latency_ms,
     }
 
 # ── Plugin API ──────────────────────────────────────────────

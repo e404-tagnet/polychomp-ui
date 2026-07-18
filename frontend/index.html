@@ -19,8 +19,8 @@
       </header>
       <div id="project-list" class="project-list"></div>
       <footer class="sidebar-footer">
-        <button id="plugins-btn" class="btn btn-ghost">🔌 Plugins</button>
-        <button id="settings-btn" class="btn btn-ghost">⚙ Settings</button>
+        <button id="plugins-btn" class="btn btn-ghost">Plugins</button>
+        <button id="settings-btn" class="btn btn-ghost">Settings</button>
       </footer>
     </aside>
 
@@ -29,12 +29,22 @@
       <header id="chat-header" class="chat-header">
         <h2 id="project-name">Select a project</h2>
         <div class="header-actions">
-          <button id="prism-toggle" class="btn btn-ghost btn-sm" title="Toggle PRISM Inspector">
-            🔍 PRISM
+          <button id="analysis-toggle" class="btn btn-ghost btn-sm" title="Toggle Chat Analysis">
+            Analysis
           </button>
           <button id="clear-chat-btn" class="btn btn-ghost btn-sm">Clear</button>
         </div>
       </header>
+      <!-- Route Guide -->
+      <div id="route-guide" class="route-guide">
+        <span class="route-label">Routes:</span>
+        <span class="route-dot route-comply" title="Go along with user bias">comply</span>
+        <span class="route-dot route-challenge" title="Push back gently">challenge</span>
+        <span class="route-dot route-clarify" title="Ask for more info">clarify</span>
+        <span class="route-dot route-encourage" title="Supportive nudge">encourage</span>
+        <span class="route-dot route-digress" title="Change topic">digress</span>
+        <span class="route-dot route-end" title="Wrap up">end</span>
+      </div>
       <div id="messages" class="messages"></div>
       <footer class="chat-footer">
         <div class="input-bar">
@@ -43,18 +53,18 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/></svg>
           </button>
         </div>
-        <div id="model-status" class="model-status">Local · phi4-mini · PRISM shadow</div>
+        <div id="model-status" class="model-status">Local - phi4-mini - Analysis shadow</div>
       </footer>
     </main>
 
-    <!-- PRISM Inspector Panel (hidden by default) -->
-    <aside id="prism-panel" class="prism-panel hidden">
-      <header class="prism-header">
-        <h3>PRISM Inspector</h3>
-        <button id="prism-close" class="btn btn-ghost btn-sm">×</button>
+    <!-- Chat Analysis Panel (hidden by default) -->
+    <aside id="analysis-panel" class="analysis-panel hidden">
+      <header class="analysis-header">
+        <h3>Chat Analysis</h3>
+        <button id="analysis-close" class="btn btn-ghost btn-sm">×</button>
       </header>
-      <div id="prism-content" class="prism-content">
-        <p class="prism-placeholder">Select a message to inspect.</p>
+      <div id="analysis-content" class="analysis-content">
+        <p class="analysis-placeholder">Send a message to see analysis.</p>
       </div>
     </aside>
   </div>
@@ -68,33 +78,49 @@
         <button class="btn btn-ghost btn-sm" id="close-settings">×</button>
       </header>
       <div class="modal-body">
-        <div class="setting-row">
-          <label for="model-endpoint">Model Endpoint</label>
-          <input type="text" id="model-endpoint" value="http://127.0.0.1:11434">
+      <div class="setting-row">
+        <label for="model-endpoint">Model Endpoint</label>
+        <input type="text" id="model-endpoint" value="http://127.0.0.1:11434">
+      </div>
+      <div class="setting-row">
+        <label for="model-name">Model</label>
+        <select id="model-name">
+          <option value="phi4-mini" selected>phi4-mini (fast, local)</option>
+          <option value="llama3.1:8b">llama3.1:8b (balanced)</option>
+          <option value="mistral:7b">mistral:7b (creative)</option>
+          <option value="qwen2.5:7b">qwen2.5:7b (precise)</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <label for="use-prism">Enable Analysis</label>
+        <input type="checkbox" id="use-prism" checked>
+      </div>
+      <div class="setting-row">
+        <label for="prism-mode">Analysis Mode</label>
+        <select id="prism-mode">
+          <option value="shadow">Shadow (log only)</option>
+          <option value="active">Active (inject into prompt)</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <label>Creativity (Temperature)</label>
+        <div class="temp-slider">
+          <input type="range" id="temperature" min="0" max="100" value="50">
+          <span id="temp-label">Balanced</span>
         </div>
-        <div class="setting-row">
-          <label for="model-name">Model Name</label>
-          <input type="text" id="model-name" value="phi4-mini">
+      </div>
+      <div class="setting-row">
+        <label>System Prompt</label>
+        <textarea id="system-prompt" rows="3" placeholder="Optional: override default scaffold behaviour..."></textarea>
+      </div>
+      <div class="setting-row">
+        <label>Privacy Level</label>
+        <div class="privacy-options">
+          <label><input type="radio" name="privacy" value="local" checked> Local only</label>
+          <label><input type="radio" name="privacy" value="hybrid"> Hybrid</label>
+          <label><input type="radio" name="privacy" value="cloud"> Cloud OK</label>
         </div>
-        <div class="setting-row">
-          <label for="use-prism">Enable PRISM</label>
-          <input type="checkbox" id="use-prism" checked>
-        </div>
-        <div class="setting-row">
-          <label for="prism-mode">PRISM Mode</label>
-          <select id="prism-mode">
-            <option value="shadow">Shadow (log only)</option>
-            <option value="active">Active (inject into prompt)</option>
-          </select>
-        </div>
-        <div class="setting-row">
-          <label>Privacy Level</label>
-          <div class="privacy-options">
-            <label><input type="radio" name="privacy" value="local" checked> Local only</label>
-            <label><input type="radio" name="privacy" value="hybrid"> Hybrid</label>
-            <label><input type="radio" name="privacy" value="cloud"> Cloud OK</label>
-          </div>
-        </div>
+      </div>
       </div>
       <footer class="modal-footer">
         <button class="btn btn-primary" id="save-settings">Save</button>
@@ -131,12 +157,12 @@
     <div class="modal-backdrop"></div>
     <div class="modal-card" style="width:520px;max-height:90vh;display:flex;flex-direction:column;">
       <header class="modal-header">
-        <h3>Welcome to Polychomp 🐉</h3>
+        <h3>Welcome to Polychomp</h3>
         <button class="btn btn-ghost btn-sm" id="close-onboarding">×</button>
       </header>
       <div class="modal-body" id="onboarding-body" style="overflow-y:auto;">
         <p style="color:var(--overlay1);margin-bottom:1rem;font-size:.85rem;">
-          A few quick questions help PRISM adapt to you. You can always change these later in Settings.
+          A few quick questions help the system adapt to you. You can always change these later in Settings.
         </p>
 
         <!-- Q1 -->
@@ -174,7 +200,7 @@
 
         <!-- Q5 -->
         <div class="onboarding-q">
-          <h4>5. How often should PRISM challenge your assumptions?</h4>
+          <h4>5. How often should the system challenge your assumptions?</h4>
           <label><input type="radio" name="q5" value="often"> Often — I want to be pushed</label>
           <label><input type="radio" name="q5" value="sometimes" checked> Sometimes — when confidence is high</label>
           <label><input type="radio" name="q5" value="rarely"> Rarely — only if clearly wrong</label>
@@ -191,7 +217,7 @@
 
         <!-- Q7 -->
         <div class="onboarding-q">
-          <h4>7. PRISM inspector panel preference</h4>
+          <h4>7. Analysis panel preference</h4>
           <label><input type="radio" name="q7" value="visible"> Visible by default — I want to see every analysis</label>
           <label><input type="radio" name="q7" value="hidden" checked> Hidden by default — I'll click when curious</label>
         </div>

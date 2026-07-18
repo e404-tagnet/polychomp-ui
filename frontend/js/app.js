@@ -25,6 +25,8 @@ const sendBtn        = document.getElementById("send-btn");
 const projectName    = document.getElementById("project-name");
 const analysisPanel  = document.getElementById("analysis-panel");
 const analysisContent = document.getElementById("analysis-content");
+const memoryPanel    = document.getElementById("memory-panel");
+const memoryContent  = document.getElementById("memory-content");
 const appRoot        = document.getElementById("app");
 const modelStatus    = document.getElementById("model-status");
 
@@ -429,6 +431,144 @@ function hideAnalysisInspector() {
   analysisContent.innerHTML = `<p class="analysis-placeholder">Send a message to see analysis.</p>`;
 }
 
+// ── Memory Panel ───────────────────────────────────────────
+let projectMemories = [];
+
+async function loadMemories() {
+  if (!currentProject) return;
+  try {
+    const res = await fetch(`${API_BASE}/api/projects/${currentProject.id}/memories`);
+    const data = await res.json();
+    projectMemories = data.memories || [];
+    renderMemories();
+  } catch (e) {
+    memoryContent.innerHTML = `<p class="memory-placeholder">Failed to load memories.</p>`;
+  }
+}
+
+function renderMemories() {
+  if (!currentProject) {
+    memoryContent.innerHTML = `<p class="memory-placeholder">Select a project to manage memories.</p>`;
+    return;
+  }
+
+  const hot = projectMemories.filter(m => m.tier === "hot");
+  const warm = projectMemories.filter(m => m.tier === "warm");
+  const cool = projectMemories.filter(m => m.tier === "cool");
+
+  memoryContent.innerHTML = `
+    <div class="memory-form">
+      <textarea id="new-memory-text" rows="2" placeholder="Add a memory (fact, preference, context)..."\u003e\u003c/textarea\u003e
+      <input type="text" id="new-memory-tags" placeholder="Tags, comma-separated (optional)"\u003e
+      <button class="btn btn-primary btn-sm" id="add-memory-btn"\u003eAdd Memory\u003c/button\u003e
+    \u003c/div\u003e
+
+    <div class="memory-tier hot"\u003e
+      <h4\u003eHot <span class="tier-count"\u003e${hot.length}\u003c/span\u003e\u003c/h4\u003e
+      ${hot.length ? hot.map(m => renderMemoryItem(m)).join("") : `<p style="color:var(--overlay0);font-size:.75rem;"\u003eNo hot memories yet.\u003c/p\u003e`}
+    \u003c/div\u003e
+
+    <div class="memory-tier warm"\u003e
+      <h4\u003eWarm <span class="tier-count"\u003e${warm.length}\u003c/span\u003e\u003c/h4\u003e
+      ${warm.length ? warm.map(m => renderMemoryItem(m)).join("") : `<p style="color:var(--overlay0);font-size:.75rem;"\u003eNo warm memories yet.\u003c/p\u003e`}
+    \u003c/div\u003e
+
+    <div class="memory-tier cool"\u003e
+      <h4\u003eCool <span class="tier-count"\u003e${cool.length}\u003c/span\u003e\u003c/h4\u003e
+      ${cool.length ? cool.map(m => renderMemoryItem(m)).join("") : `<p style="color:var(--overlay0);font-size:.75rem;"\u003eNo cool memories yet.\u003c/p\u003e`}
+    \u003c/div\u003e
+  `;
+
+  // Wire add button
+  document.getElementById("add-memory-btn")?.addEventListener("click", addMemory);
+}
+
+function renderMemoryItem(m) {
+  const tagsHtml = (m.tags || []).map(t => `<span class="mem-tag"\u003e${escapeHtml(t)}\u003c/span\u003e`).join(" ");
+  const age = fmtAge(m.created);
+  return `
+    \u003cdiv class="memory-item" data-id="${m.id}"\u003e
+      \u003cdiv class="mem-content"\u003e${escapeHtml(m.content)}\u003c/div\u003e
+      \u003cdiv class="mem-meta"\u003e
+        ${tagsHtml}
+        \u003cspan\u003e${age}\u003c/span\u003e
+        \u003cspan\u003eaccessed ${m.access_count || 0}x\u003c/span\u003e
+      \u003c/div\u003e
+      \u003cdiv class="memory-actions"\u003e
+        ${m.tier !== "hot" ? `<button class="btn btn-ghost btn-sm" data-promote="${m.id}"\u003ePromote\u003c/button\u003e` : ""}
+        ${m.tier !== "cool" ? `<button class="btn btn-ghost btn-sm" data-demote="${m.id}"\u003eDemote\u003c/button\u003e` : ""}
+        \u003cbutton class="btn btn-ghost btn-sm" data-delete="${m.id}"\u003eDelete\u003c/button\u003e
+      \u003c/div\u003e
+    \u003c/div\u003e
+  `;
+}
+
+async function addMemory() {
+  const content = document.getElementById("new-memory-text")?.value?.trim();
+  if (!content || !currentProject) return;
+  const tagsRaw = document.getElementById("new-memory-tags")?.value?.trim() || "";
+  const tags = tagsRaw.split(",").map(t => t.trim()).filter(Boolean);
+
+  await fetch(`${API_BASE}/api/projects/${currentProject.id}/memories`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ content, tier: "hot", tags }),
+  });
+  await loadMemories();
+}
+
+async function promoteMemory(id) {
+  if (!currentProject) return;
+  await fetch(`${API_BASE}/api/projects/${currentProject.id}/memories/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tier: "hot" }),
+  });
+  await loadMemories();
+}
+
+async function demoteMemory(id) {
+  if (!currentProject) return;
+  const mem = projectMemories.find(m => m.id === id);
+  const nextTier = mem?.tier === "hot" ? "warm" : "cool";
+  await fetch(`${API_BASE}/api/projects/${currentProject.id}/memories/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tier: nextTier }),
+  });
+  await loadMemories();
+}
+
+async function deleteMemory(id) {
+  if (!currentProject) return;
+  if (!confirm("Delete this memory?")) return;
+  await fetch(`${API_BASE}/api/projects/${currentProject.id}/memories/${id}`, { method: "DELETE" });
+  await loadMemories();
+}
+
+function showMemoryPanel() {
+  appRoot.classList.add("memory-open");
+  memoryPanel.classList.remove("hidden");
+  loadMemories();
+}
+
+function hideMemoryPanel() {
+  appRoot.classList.remove("memory-open");
+  memoryPanel.classList.add("hidden");
+  memoryContent.innerHTML = `<p class="memory-placeholder">Select a project to manage memories.</p>`;
+}
+
+function fmtAge(iso) {
+  const d = new Date(iso);
+  const now = new Date();
+  const mins = Math.floor((now - d) / 60000);
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ago`;
+}
+
 // ── Send Message ───────────────────────────────────────────
 async function sendMessage() {
   const text = messageInput.value.trim();
@@ -593,6 +733,27 @@ function setupEventListeners() {
     }
   });
   document.getElementById("analysis-close").addEventListener("click", hideAnalysisInspector);
+
+  // Memory panel
+  document.getElementById("memory-toggle").addEventListener("click", () => {
+    if (memoryPanel.classList.contains("hidden")) {
+      showMemoryPanel();
+    } else {
+      hideMemoryPanel();
+    }
+  });
+  document.getElementById("memory-close").addEventListener("click", hideMemoryPanel);
+
+  // Delegate memory actions (promote/demote/delete) since they're dynamically rendered
+  memoryContent.addEventListener("click", (e) => {
+    const target = e.target.closest("button");
+    if (!target) return;
+    const id = target.dataset.promote || target.dataset.demote || target.dataset.delete;
+    if (!id) return;
+    if (target.dataset.promote) promoteMemory(id);
+    if (target.dataset.demote) demoteMemory(id);
+    if (target.dataset.delete) deleteMemory(id);
+  });
 
   document.getElementById("settings-btn").addEventListener("click", openSettings);
   document.getElementById("close-settings").addEventListener("click", closeSettings);

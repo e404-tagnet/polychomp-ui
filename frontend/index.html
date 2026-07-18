@@ -29,6 +29,9 @@
       <header id="chat-header" class="chat-header">
         <h2 id="project-name">Select a project</h2>
         <div class="header-actions">
+          <button id="memory-toggle" class="btn btn-ghost btn-sm" title="Toggle Memory Panel">
+            Memory
+          </button>
           <button id="analysis-toggle" class="btn btn-ghost btn-sm" title="Toggle Chat Analysis">
             Analysis
           </button>
@@ -65,6 +68,17 @@
       </header>
       <div id="analysis-content" class="analysis-content">
         <p class="analysis-placeholder">Send a message to see analysis.</p>
+      </div>
+    </aside>
+
+    <!-- Memory Panel (hidden by default) -->
+    <aside id="memory-panel" class="memory-panel hidden">
+      <header class="memory-header">
+        <h3>Memory</h3>
+        <button id="memory-close" class="btn btn-ghost btn-sm">×</button>
+      </header>
+      <div id="memory-content" class="memory-content">
+        <p class="memory-placeholder">Select a project to manage memories.</p>
       </div>
     </aside>
   </div>

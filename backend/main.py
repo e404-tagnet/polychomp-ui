@@ -213,6 +213,25 @@ def reset_profile():
         path.unlink()
     return {"ok": True}
 
+class MemoryEntry(BaseModel):
+    id: str
+    content: str
+    tier: str  # hot / warm / cool
+    created: str
+    last_accessed: str
+    access_count: int = 0
+    tags: List[str] = []
+
+class MemoryCreate(BaseModel):
+    content: str
+    tier: str = "hot"
+    tags: List[str] = []
+
+class MemoryUpdate(BaseModel):
+    tier: Optional[str] = None
+    content: Optional[str] = None
+    tags: Optional[List[str]] = None
+
 class ProjectUpdate(BaseModel):
     messages: List[Dict[str, Any]]
 
@@ -323,6 +342,99 @@ def chat(req: ChatRequest):
         "token_count": token_count,
         "latency_ms": latency_ms,
     }
+
+# ── Memory API ────────────────────────────────────────────
+
+MEMORIES_DIR = APP_ROOT / "projects" / "__memories__"
+MEMORIES_DIR.mkdir(parents=True, exist_ok=True)
+
+def _memory_path(project_id: str) -> Path:
+    return MEMORIES_DIR / f"{project_id}.json"
+
+def _load_memories(project_id: str) -> List[Dict]:
+    path = _memory_path(project_id)
+    if path.exists():
+        return json.load(open(path))
+    return []
+
+def _save_memories(project_id: str, memories: List[Dict]) -> None:
+    with open(_memory_path(project_id), "w") as f:
+        json.dump(memories, f, indent=2)
+
+def _decay_memories(memories: List[Dict]) -> List[Dict]:
+    """Move memories between tiers based on age and access."""
+    now = datetime.utcnow()
+    for m in memories:
+        created = datetime.fromisoformat(m["created"])
+        age_hours = (now - created).total_seconds() / 3600
+        if m["tier"] == "hot" and age_hours > 24:
+            m["tier"] = "warm"
+        if m["tier"] == "warm" and age_hours > 168:  # 1 week
+            m["tier"] = "cool"
+    return memories
+
+@app.get("/api/projects/{project_id}/memories")
+def list_memories(project_id: str):
+    memories = _load_memories(project_id)
+    memories = _decay_memories(memories)
+    # Sort by tier (hot first) then by last_accessed
+    tier_order = {"hot": 0, "warm": 1, "cool": 2}
+    memories.sort(key=lambda m: (tier_order.get(m["tier"], 3), m["last_accessed"]), reverse=True)
+    return {"memories": memories}
+
+@app.post("/api/projects/{project_id}/memories")
+def create_memory(project_id: str, req: MemoryCreate):
+    mid = str(uuid.uuid4())[:8]
+    now = datetime.utcnow().isoformat()
+    memory = {
+        "id": mid,
+        "content": req.content,
+        "tier": req.tier,
+        "created": now,
+        "last_accessed": now,
+        "access_count": 0,
+        "tags": req.tags,
+    }
+    memories = _load_memories(project_id)
+    memories.append(memory)
+    _save_memories(project_id, memories)
+    return memory
+
+@app.put("/api/projects/{project_id}/memories/{memory_id}")
+def update_memory(project_id: str, memory_id: str, req: MemoryUpdate):
+    memories = _load_memories(project_id)
+    for m in memories:
+        if m["id"] == memory_id:
+            if req.tier: m["tier"] = req.tier
+            if req.content: m["content"] = req.content
+            if req.tags: m["tags"] = req.tags
+            m["last_accessed"] = datetime.utcnow().isoformat()
+            _save_memories(project_id, memories)
+            return m
+    raise HTTPException(status_code=404, detail="Memory not found")
+
+@app.post("/api/projects/{project_id}/memories/{memory_id}/access")
+def access_memory(project_id: str, memory_id: str):
+    memories = _load_memories(project_id)
+    for m in memories:
+        if m["id"] == memory_id:
+            m["access_count"] = m.get("access_count", 0) + 1
+            m["last_accessed"] = datetime.utcnow().isoformat()
+            # Promote on frequent access
+            if m["tier"] == "cool" and m["access_count"] >= 2:
+                m["tier"] = "warm"
+            if m["tier"] == "warm" and m["access_count"] >= 5:
+                m["tier"] = "hot"
+            _save_memories(project_id, memories)
+            return m
+    raise HTTPException(status_code=404, detail="Memory not found")
+
+@app.delete("/api/projects/{project_id}/memories/{memory_id}")
+def delete_memory(project_id: str, memory_id: str):
+    memories = _load_memories(project_id)
+    memories = [m for m in memories if m["id"] != memory_id]
+    _save_memories(project_id, memories)
+    return {"ok": True}
 
 # ── Plugin API ──────────────────────────────────────────────
 

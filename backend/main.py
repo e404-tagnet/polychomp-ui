@@ -84,12 +84,25 @@ class ProjectCreate(BaseModel):
     description: str = ""
     workspace_path: Optional[str] = None
 
+class SubChat(BaseModel):
+    id: str
+    name: str
+    created: str
+    messages: List[Dict[str, Any]] = []
+
+class ProjectContext(BaseModel):
+    overview: str = ""
+    plan: str = ""
+    review: str = ""
+
 class Project(BaseModel):
     id: str
     name: str
     description: str
     created: str
     workspace_path: Optional[str] = None
+    context: Optional[Dict[str, str]] = None
+    sub_chats: Optional[List[Dict[str, Any]]] = None
 
 # ── Helpers ───────────────────────────────────────────────
 
@@ -161,6 +174,8 @@ def create_project(req: ProjectCreate):
         "created": datetime.utcnow().isoformat(),
         "messages": [],
         "prism_state": None,
+        "context": {"overview": "", "plan": "", "review": ""},
+        "sub_chats": [],
     }
     _save_project(pid, project)
     return Project(**project)
@@ -483,6 +498,62 @@ def read_workspace_file(project_id: str, filename: str):
     if path.stat().st_size > 2 * 1024 * 1024:
         raise HTTPException(status_code=413, detail="File too large")
     return {"content": path.read_text(encoding="utf-8", errors="replace")}
+
+# ── Project Context API ───────────────────────────────────
+
+@app.get("/api/projects/{project_id}/context")
+def get_project_context(project_id: str):
+    project = _load_project(project_id)
+    return project.get("context", {"overview": "", "plan": "", "review": ""})
+
+@app.put("/api/projects/{project_id}/context")
+def update_project_context(project_id: str, req: ProjectContext):
+    project = _load_project(project_id)
+    project["context"] = req.dict()
+    _save_project(project_id, project)
+    return {"ok": True}
+
+# ── Sub Chat API ──────────────────────────────────────────
+
+@app.post("/api/projects/{project_id}/subchats", response_model=SubChat)
+def create_sub_chat(project_id: str, name: str = "New Sub-chat"):
+    project = _load_project(project_id)
+    sid = str(uuid.uuid4())[:8]
+    sub = {"id": sid, "name": name, "created": datetime.utcnow().isoformat(), "messages": []}
+    project.setdefault("sub_chats", []).append(sub)
+    _save_project(project_id, project)
+    return SubChat(**sub)
+
+@app.get("/api/projects/{project_id}/subchats")
+def list_sub_chats(project_id: str):
+    project = _load_project(project_id)
+    return project.get("sub_chats", [])
+
+@app.get("/api/projects/{project_id}/subchats/{sub_id}")
+def get_sub_chat(project_id: str, sub_id: str):
+    project = _load_project(project_id)
+    for s in project.get("sub_chats", []):
+        if s["id"] == sub_id:
+            return s
+    raise HTTPException(status_code=404, detail="Sub-chat not found")
+
+@app.put("/api/projects/{project_id}/subchats/{sub_id}")
+def update_sub_chat(project_id: str, sub_id: str, req: ProjectUpdate):
+    project = _load_project(project_id)
+    for s in project.get("sub_chats", []):
+        if s["id"] == sub_id:
+            s["messages"] = req.messages
+            _save_project(project_id, project)
+            return {"ok": True}
+    raise HTTPException(status_code=404, detail="Sub-chat not found")
+
+@app.delete("/api/projects/{project_id}/subchats/{sub_id}")
+def delete_sub_chat(project_id: str, sub_id: str):
+    project = _load_project(project_id)
+    subs = project.get("sub_chats", [])
+    project["sub_chats"] = [s for s in subs if s["id"] != sub_id]
+    _save_project(project_id, project)
+    return {"ok": True}
 
 # ── Plugin API ──────────────────────────────────────────────
 

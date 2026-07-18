@@ -6,12 +6,15 @@
     </linearGradient>
   </defs>
   <rect width="256" height="256" rx="28" fill="url(#bg)"/>
-  <!-- T big on left half -->
+  <!-- P big on left half -->
   <text x="72" y="128" text-anchor="middle" dominant-baseline="central"
         font-family="'BlexMono Nerd Font', 'JetBrainsMono Nerd Font', 'Hack Nerd Font', monospace"
-        font-size="150" font-weight="bold" fill="#89dceb">T</text>
-  <!-- N big on right half -->
-  <text x="184" y="128" text-anchor="middle" dominant-baseline="central"
+        font-size="150" font-weight="bold" fill="#89dceb">P</text>
+  <!-- ui smaller on right half -->
+  <text x="182" y="118" text-anchor="middle" dominant-baseline="central"
         font-family="'BlexMono Nerd Font', 'JetBrainsMono Nerd Font', 'Hack Nerd Font', monospace"
-        font-size="150" font-weight="bold" fill="#94e2d5">N</text>
+        font-size="72" font-weight="bold" fill="#94e2d5">u</text>
+  <text x="182" y="168" text-anchor="middle" dominant-baseline="central"
+        font-family="'BlexMono Nerd Font', 'JetBrainsMono Nerd Font', 'Hack Nerd Font', monospace"
+        font-size="72" font-weight="bold" fill="#94e2d5">i</text>
 </svg>

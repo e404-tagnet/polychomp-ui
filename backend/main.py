@@ -13,7 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-app = FastAPI(title="Polychomp-UI")
+app = FastAPI(title="Prism-UI-UI")
 PRISM_ROOT = Path(__file__).resolve().parents[1] / ".." / "prism-scaffold" / "src"
 sys.path.insert(0, str(PRISM_ROOT))
 
@@ -41,7 +41,7 @@ else:
         if pid in plugin_mgr._registry:
             plugin_mgr.load(pid)
 
-app = FastAPI(title="Polychomp-UI", version="0.1.0")
+app = FastAPI(title="Prism-UI-UI", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -116,10 +116,10 @@ def _ensure_welcome_project() -> Dict:
     welcome = {
         "id": welcome_id,
         "name": "📘 Welcome",
-        "description": "Getting started with Polychomp",
+        "description": "Getting started with Prism-UI",
         "created": datetime.utcnow().isoformat(),
         "messages": [
-            {"role": "assistant", "content": "👋 Welcome to Polychomp!\n\nI'm your scaffold-aware chat companion. Here's how I work:", "prism_meta": None, "timestamp": datetime.utcnow().isoformat()},
+            {"role": "assistant", "content": "👋 Welcome to Prism-UI!\n\nI'm your scaffold-aware chat companion. Here's how I work:", "prism_meta": None, "timestamp": datetime.utcnow().isoformat()},
             {"role": "assistant", "content": "🧠 **Projects**\nEach project is a separate workspace with its own memory. Create projects for different tasks — coding, writing, research, etc.", "prism_meta": None, "timestamp": datetime.utcnow().isoformat()},
             {"role": "assistant", "content": "🔍 **PRISM Shadow Analysis**\nEvery message you send gets analysed for bias (authority, confirmation, sunk cost, etc.). Click the coloured chip on your messages to see the full inspector.", "prism_meta": None, "timestamp": datetime.utcnow().isoformat()},
             {"role": "assistant", "content": "🎚️ **Adaptive Behaviour**\nPRISM adjusts temperature, assertiveness, and routing based on what it detects. If it spots sunk cost, it challenges gently. If you're stuck, it reframes.", "prism_meta": None, "timestamp": datetime.utcnow().isoformat()},

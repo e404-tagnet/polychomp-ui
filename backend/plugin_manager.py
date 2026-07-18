@@ -1,4 +1,4 @@
-"""Polychomp Plugin Manager
+"""Prism-UI Plugin Manager
 
 A lightweight plugin system for scaffolds, skills, and tools.
 
@@ -120,7 +120,7 @@ class PluginManager:
 
         try:
             spec = importlib.util.spec_from_file_location(
-                f"polychomp_plugin_{plugin_id}", entry_file
+                f"prism-ui_plugin_{plugin_id}", entry_file
             )
             module = importlib.util.module_from_spec(spec)
             sys.modules[spec.name] = module

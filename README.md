@@ -1,4 +1,4 @@
-# Polychomp-UI
+# Prism-UI-UI
 
 A scaffold-first chat GUI for local and remote LLM conversations, built around the PRISM shadow Bayesian scaffold. Named after the many-toothed beast that devours context — and gives it back, structured.
 

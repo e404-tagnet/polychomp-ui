@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Polychomp-UI</title>
+<title>Prism-UI-UI</title>
 <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
@@ -13,7 +13,7 @@
       <header class="sidebar-header">
         <h1 class="brand">
           <span class="brand-icon">◉</span>
-          <span class="brand-text">Polychomp</span>
+          <span class="brand-text">Prism-UI</span>
         </h1>
         <button id="new-project-btn" class="btn btn-primary" title="New Project">+</button>
       </header>
@@ -50,17 +50,17 @@
       <!-- Route Guide -->
       <div id="route-guide" class="route-guide">
         <span class="route-label">Routes:</span>
-        <span class="route-dot route-comply" title="Go along with user bias">comply</span>
-        <span class="route-dot route-challenge" title="Push back gently">challenge</span>
-        <span class="route-dot route-clarify" title="Ask for more info">clarify</span>
-        <span class="route-dot route-encourage" title="Supportive nudge">encourage</span>
-        <span class="route-dot route-digress" title="Change topic">digress</span>
-        <span class="route-dot route-end" title="Wrap up">end</span>
+        <span class="route-dot route-comply" data-tooltip="Go along with user bias">comply</span>
+        <span class="route-dot route-challenge" data-tooltip="Push back gently">challenge</span>
+        <span class="route-dot route-clarify" data-tooltip="Ask for more info">clarify</span>
+        <span class="route-dot route-encourage" data-tooltip="Supportive nudge">encourage</span>
+        <span class="route-dot route-digress" data-tooltip="Change topic">digress</span>
+        <span class="route-dot route-end" data-tooltip="Wrap up">end</span>
       </div>
       <div id="messages" class="messages"></div>
       <footer class="chat-footer">
         <div class="input-bar">
-          <textarea id="message-input" rows="1" placeholder="Message Polychomp…"></textarea>
+          <textarea id="message-input" rows="1" placeholder="Message Prism-UI…"></textarea>
           <button id="send-btn" class="btn btn-primary">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/></svg>
           </button>
@@ -185,7 +185,7 @@
     <div class="modal-backdrop"></div>
     <div class="modal-card" style="width:520px;max-height:90vh;display:flex;flex-direction:column;">
       <header class="modal-header">
-        <h3>Welcome to Polychomp</h3>
+        <h3>Welcome to Prism-UI</h3>
         <button class="btn btn-ghost btn-sm" id="close-onboarding">×</button>
       </header>
       <div class="modal-body" id="onboarding-body" style="overflow-y:auto;">

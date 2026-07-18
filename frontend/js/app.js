@@ -1,5 +1,5 @@
 /**
- * Polychomp-UI Frontend
+ * Prism-UI-UI Frontend
  * Catppuccin Mocha, dark mode, Chat Analysis
  */
 
@@ -339,12 +339,18 @@ function appendMessage(role, content, prismMeta, animate = true) {
   wrapper.className = `message ${role}`;
 
   let chip = "";
+  let biasBadge = "";
   if (prismMeta && role === "user") {
-    chip = `<button class="prism-chip route-${prismMeta.route}" data-meta='${JSON.stringify(prismMeta).replace(/'/g, "&#39;")}' title="Inspect analysis">${prismMeta.route} - ${Math.round(prismMeta.confidence * 100)}%</button>`;
+    chip = `<button class="prism-chip route-${prismMeta.route}" data-meta='${JSON.stringify(prismMeta).replace(/'/g, "&#39;")}' data-tooltip="Click to inspect analysis">${prismMeta.route} - ${Math.round(prismMeta.confidence * 100)}%</button>`;
+    // Bias detection badge
+    if (prismMeta.bias && prismMeta.bias.length) {
+      biasBadge = `<div class="bias-badges">${prismMeta.bias.map(b => `<span class="bias-badge" data-tooltip="${b.description || b.type}">${b.type}</span>`).join("")}</div>`;
+    }
   }
 
   wrapper.innerHTML = `
     <div class="message-bubble">${escapeHtml(content)}</div>
+    ${biasBadge}
     <div class="message-meta">
       ${chip}
       <span class="ts">${fmtTime()}</span>
@@ -394,33 +400,33 @@ function showAnalysisInspector(meta, tokenCount = 0, latencyMs = 0) {
   const confClass = meta.confidence >= 0.7 ? "conf-high" : meta.confidence >= 0.4 ? "conf-med" : "conf-low";
 
   analysisContent.innerHTML = `
-    <div class="analysis-block">
+    <div class="analysis-block" data-tooltip="Detected cognitive biases in your message">
       <h4>Bias Detected</h4>
-      <div class="analysis-val bias">${meta.bias}</div>
+      <div class="analysis-val bias">${meta.bias || "None"}</div>
     </div>
-    <div class="analysis-block">
+    <div class="analysis-block" data-tooltip="How certain the model is about its assessment">
       <h4>Confidence</h4>
       <div class="analysis-val ${confClass}">${(meta.confidence * 100).toFixed(1)}%</div>
     </div>
-    <div class="analysis-block">
+    <div class="analysis-block" data-tooltip="Suggested response strategy based on analysis">
       <h4>Recommended Route</h4>
       <div class="analysis-val route-${meta.route}">${meta.route.toUpperCase()}</div>
       <p style="margin-top:.4rem;color:var(--overlay0);font-size:.75rem;">${meta.reason}</p>
     </div>
-    <div class="analysis-block">
+    <div class="analysis-block" data-tooltip="Session-level settings that influenced this response">
       <h4>Session Metrics</h4>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.3rem;">
-        <div><span style="color:var(--overlay0)">Temp</span><br><span class="analysis-val">${meta.temperature}</span></div>
-        <div><span style="color:var(--overlay0)">Assertive</span><br><span class="analysis-val">${meta.assertiveness}</span></div>
-        <div><span style="color:var(--overlay0)">Topic Drift</span><br><span class="analysis-val">${meta.topic_drift}</span></div>
-        <div><span style="color:var(--overlay0)">Factual</span><br><span class="analysis-val">${meta.factual ? "Yes" : "No"}</span></div>
+        <div data-tooltip="Temperature / Creativity setting"><span style="color:var(--overlay0)">Temp</span><br><span class="analysis-val">${meta.temperature}</span></div>
+        <div data-tooltip="User assertiveness score (0-1)"><span style="color:var(--overlay0)">Assertive</span><br><span class="analysis-val">${meta.assertiveness}</span></div>
+        <div data-tooltip="How far the conversation has drifted from original topic"><span style="color:var(--overlay0)">Topic Drift</span><br><span class="analysis-val">${meta.topic_drift}</span></div>
+        <div data-tooltip="Whether the message contained factual claims"><span style="color:var(--overlay0)">Factual</span><br><span class="analysis-val">${meta.factual ? "Yes" : "No"}</span></div>
       </div>
     </div>
-    <div class="analysis-block">
+    <div class="analysis-block" data-tooltip="Response size and generation speed">
       <h4>Tokens</h4>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.3rem;">
-        <div><span style="color:var(--overlay0)">Total</span><br><span class="analysis-val">${tokenCount > 0 ? tokenCount : '--'}</span></div>
-        <div><span style="color:var(--overlay0)">Latency</span><br><span class="analysis-val">${latencyMs > 0 ? latencyMs + 'ms' : '--'}</span></div>
+        <div data-tooltip="Estimated token count of response"><span style="color:var(--overlay0)">Total</span><br><span class="analysis-val">${tokenCount > 0 ? tokenCount : '--'}</span></div>
+        <div data-tooltip="Time taken to generate response"><span style="color:var(--overlay0)">Latency</span><br><span class="analysis-val">${latencyMs > 0 ? latencyMs + 'ms' : '--'}</span></div>
       </div>
     </div>
   `;
@@ -735,7 +741,7 @@ async function sendMessage() {
 
 // ── Settings ────────────────────────────────────────────────
 function loadSettings() {
-  const saved = localStorage.getItem("polychomp-settings");
+  const saved = localStorage.getItem("prism-ui-settings");
   if (saved) Object.assign(settings, JSON.parse(saved));
   document.getElementById("model-endpoint").value = settings.modelEndpoint;
   document.getElementById("model-name").value = settings.modelName;
@@ -784,7 +790,7 @@ function saveSettings() {
   if (tempSlider) settings.temperature = tempSlider.value / 100;
   const sysPrompt = document.getElementById("system-prompt");
   if (sysPrompt) settings.systemPrompt = sysPrompt.value;
-  localStorage.setItem("polychomp-settings", JSON.stringify(settings));
+  localStorage.setItem("prism-ui-settings", JSON.stringify(settings));
   updateModelStatus();
   closeSettings();
 }

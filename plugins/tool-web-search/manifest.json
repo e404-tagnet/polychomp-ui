@@ -3,7 +3,7 @@
   "name": "Web Search",
   "description": "Search the web for current information. (Placeholder — requires API key)",
   "version": "0.1.0",
-  "author": "Polychomp Team",
+  "author": "Prism-UI Team",
   "type": "tool",
   "entry_point": "main.py",
   "hooks": ["pre_send"],

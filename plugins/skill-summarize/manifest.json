@@ -3,7 +3,7 @@
   "name": "Summarize",
   "description": "Summarize long text responses into concise bullet points.",
   "version": "1.0.0",
-  "author": "Polychomp Team",
+  "author": "Prism-UI Team",
   "type": "skill",
   "entry_point": "main.py",
   "hooks": ["post_receive"],

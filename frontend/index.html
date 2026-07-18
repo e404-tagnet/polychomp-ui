@@ -12,10 +12,13 @@
     <aside id="sidebar" class="sidebar">
       <header class="sidebar-header">
         <h1 class="brand">
-          <span class="brand-icon">◉</span>
+          <span class="brand-icon">P</span>
           <span class="brand-text">Prism-UI</span>
         </h1>
-        <button id="new-project-btn" class="btn btn-primary" title="New Project">+</button>
+        <div class="sidebar-actions">
+          <button id="help-btn" class="btn btn-ghost btn-sm" data-tooltip="How to use Prism-UI">?</button>
+          <button id="new-project-btn" class="btn btn-primary btn-sm" data-tooltip="New Project">+</button>
+        </div>
       </header>
       <div id="project-list" class="project-list"></div>
       <footer class="sidebar-footer">
@@ -44,7 +47,13 @@
           <button id="analysis-toggle" class="btn btn-ghost btn-sm" title="Toggle Chat Analysis">
             Analysis
           </button>
-          <button id="clear-chat-btn" class="btn btn-ghost btn-sm">Clear</button>
+          <div class="dropdown" id="chat-options-dropdown">
+            <button class="btn btn-ghost btn-sm" id="chat-options-btn" data-tooltip="Chat options">Options</button>
+            <div class="dropdown-menu hidden" id="chat-options-menu">
+              <button class="dropdown-item" id="archive-chat-btn">Archive to workspace</button>
+              <button class="dropdown-item danger" id="clear-chat-btn">Clear chat</button>
+            </div>
+          </div>
         </div>
       </header>
       <!-- Route Guide -->
@@ -343,6 +352,44 @@
       <footer class="modal-footer">
         <button class="btn btn-ghost" id="refresh-plugins">🔄 Refresh</button>
       </footer>
+    </div>
+  </div>
+
+  <!-- Help / How To Modal -->
+  <div id="help-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-card" style="width:520px;max-height:90vh;display:flex;flex-direction:column;">
+      <header class="modal-header">
+        <h3>How to use Prism-UI</h3>
+        <button class="btn btn-ghost btn-sm" id="close-help">×</button>
+      </header>
+      <div class="modal-body" style="overflow-y:auto;">
+        <div class="help-section">
+          <h4>Getting Started</h4>
+          <ul>
+            <li><strong>Projects</strong> — Create a project for each task or topic. Link a local folder to keep documents nearby.</li>
+            <li><strong>Chat</strong> — Type a message and press Enter to send. The AI will respond based on your settings.</li>
+            <li><strong>Routes</strong> — The colored badges above the chat show the AI's response strategy (comply, challenge, clarify, etc.).</li>
+          </ul>
+        </div>
+        <div class="help-section">
+          <h4>Panels</h4>
+          <ul>
+            <li><strong>Analysis</strong> (top-right) — Inspect bias detection, confidence scores, and session metrics.</li>
+            <li><strong>Memory</strong> (top-right) — Save facts and context across sessions. Hot/Warm/Cool tiers auto-decay.</li>
+            <li><strong>Workspace</strong> — Link a folder to any project. Click file chips to inject content into chat.</li>
+          </ul>
+        </div>
+        <div class="help-section">
+          <h4>Tips</h4>
+          <ul>
+            <li>Click a bias badge under your message to open detailed analysis.</li>
+            <li>Hover over any metric in Analysis for a description of what it means.</li>
+            <li>Use the Settings modal to change model, creativity, and system prompt.</li>
+            <li>Plugins add new skills — try enabling the Summarize or Web Search plugins.</li>
+          </ul>
+        </div>
+      </div>
     </div>
   </div>
 

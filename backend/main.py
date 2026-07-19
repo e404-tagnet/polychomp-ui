@@ -461,18 +461,27 @@ def delete_memory(project_id: str, memory_id: str):
 
 # ── Workspace API ─────────────────────────────────────────
 
+ALLOWED_WORKSPACE_BASE = Path("/home/e404/Cloud/WORKSPACES/prism-ui-workspace").expanduser().resolve()
+
+def _validate_workspace_path(path_str: str) -> Path:
+    """Ensure workspace path is within the allowed base directory."""
+    path = Path(path_str).expanduser().resolve()
+    if not str(path).startswith(str(ALLOWED_WORKSPACE_BASE)):
+        raise HTTPException(status_code=403, detail="Workspace must be inside the assigned folder")
+    return path
+
 @app.get("/api/projects/{project_id}/workspace")
 def list_workspace_files(project_id: str):
     project = _load_project(project_id)
     path_str = project.get("workspace_path")
     if not path_str:
         return {"files": [], "linked": False}
-    path = Path(path_str).expanduser().resolve()
+    path = _validate_workspace_path(path_str)
     if not path.exists() or not path.is_dir():
         return {"files": [], "linked": True, "error": "Path not found or not a directory"}
     files = []
     for f in sorted(path.iterdir()):
-        if f.is_file() and f.stat().st_size < 10 * 1024 * 1024:  # Skip files > 10MB
+        if f.is_file() and f.stat().st_size < 10 * 1024 * 1024:
             files.append({
                 "name": f.name,
                 "size": f.stat().st_size,
@@ -486,9 +495,8 @@ def read_workspace_file(project_id: str, filename: str):
     path_str = project.get("workspace_path")
     if not path_str:
         raise HTTPException(status_code=404, detail="No workspace linked")
-    base = Path(path_str).expanduser().resolve()
+    base = _validate_workspace_path(path_str)
     path = base / filename
-    # Security: prevent path traversal
     try:
         path.relative_to(base)
     except ValueError:

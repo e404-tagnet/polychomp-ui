@@ -355,7 +355,7 @@ function appendMessage(role, content, prismMeta, animate = true) {
     chip = `<button class="prism-chip route-${prismMeta.route}" data-meta='${JSON.stringify(prismMeta).replace(/'/g, "&#39;")}' data-tooltip="Click to inspect analysis">${prismMeta.route} - ${Math.round(prismMeta.confidence * 100)}%</button>`;
     // Bias detection badge
     if (prismMeta.bias && prismMeta.bias.length) {
-      biasBadge = `<div class="bias-badges">${prismMeta.bias.map(b => `<span class="bias-badge" data-tooltip="${b.description || b.type}">${b.type}</span>`).join("")}</div>`;
+      biasBadge = `<div class="bias-badges">${prismMeta.bias.map(b => `<span class="bias-badge" data-tooltip="${b.description || b.type}">${b.type.toUpperCase()}</span>`).join("")}</div>`;
     }
   }
 

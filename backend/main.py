@@ -9,11 +9,12 @@ from typing import List, Dict, Any, Optional
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Query
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-app = FastAPI(title="Prism-UI-UI")
+app = FastAPI(title="Prism-UI")
 PRISM_ROOT = Path(__file__).resolve().parents[1] / ".." / "prism-scaffold" / "src"
 sys.path.insert(0, str(PRISM_ROOT))
 
@@ -23,6 +24,7 @@ from prism.core.memory import MemoryStore, MemoryEntry
 APP_ROOT = Path(__file__).resolve().parent.parent
 PROJECTS_DIR = APP_ROOT / "projects"
 PROJECTS_DIR.mkdir(exist_ok=True)
+FRONTEND_DIR = APP_ROOT / "frontend"
 
 # ── Plugin Manager ────────────────────────────────────────
 from plugin_manager import PluginManager
@@ -593,6 +595,14 @@ def delete_plugin(plugin_id: str):
     return {"ok": True}
 
 # ── Static Frontend ───────────────────────────────────────
+
+@app.get("/skill-builder", response_class=FileResponse)
+def serve_skill_builder():
+    return FileResponse(os.path.join(FRONTEND_DIR, "skill-builder.html"))
+
+@app.get("/tool-builder", response_class=FileResponse)
+def serve_tool_builder():
+    return FileResponse(os.path.join(FRONTEND_DIR, "tool-builder.html"))
 
 app.mount("/", StaticFiles(directory=APP_ROOT / "frontend", html=True), name="frontend")
 

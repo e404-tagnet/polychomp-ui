@@ -39,7 +39,42 @@ async function init() {
   }
   await loadProjects();
   setupEventListeners();
+  setupRail();
   if (projects.length) selectProject(projects[0].id);
+}
+
+// ── Icon Rail ──────────────────────────────────────────────
+function setupRail() {
+  document.querySelectorAll('.rail-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const section = item.dataset.section;
+      if (section) switchAppSection(section);
+    });
+  });
+}
+
+function switchAppSection(section) {
+  document.querySelectorAll('.rail-item').forEach(el => el.classList.remove('active'));
+  const active = document.querySelector(`.rail-item[data-section="${section}"]`);
+  if (active) active.classList.add('active');
+
+  if (section === 'projects') {
+    window.location.reload();
+  } else if (section === 'skill-builder') {
+    window.location.href = '/skill-builder';
+  } else if (section === 'tool-builder') {
+    window.location.href = '/tool-builder';
+  } else if (section === 'how-to') {
+    openHelpModal();
+  } else if (section === 'docs') {
+    window.open('https://github.com/e404-tagnet/polychomp-ui#readme', '_blank');
+  } else if (section === 'new-memory') {
+    openMemoryPanel();
+  } else if (section === 'workspace') {
+    toggleWorkspaceBar();
+  } else if (section === 'tagnet') {
+    window.open('https://tagnet.net/test.html', '_blank');
+  }
 }
 
 // ── Profile ─────────────────────────────────────────────────

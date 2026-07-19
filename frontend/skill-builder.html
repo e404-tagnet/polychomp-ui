@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skill Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Epilogue:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0c0c0c;
+    --panel: #141414;
+    --border: #242424;
+    --border-hi: #383838;
+    --accent: #e8ff57;
+    --accent-dim: rgba(232,255,87,0.08);
+    --accent2: #ff4d4d;
+    --accent3: #57c8ff;
+    --text: #e0e0e0;
+    --muted: #5a5a5a;
+    --muted2: #3a3a3a;
+    --success: #57ffb8;
+    --code: #1a1a1a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Noise overlay */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 999;
+    opacity: 0.4;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    min-height: 100vh;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    padding: 32px 24px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    overflow-y: auto;
+  }
+
+  .logo {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .logo-tag {
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .logo-title {
+    font-family: 'Epilogue', sans-serif;
+    font-size: 22px;
+    font-weight: 900;
+    color: #fff;
+    line-height: 1.1;
+  }
+
+  /* Steps nav */
+  .steps-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .step-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 1px solid transparent;
+  }
+
+  .step-item:hover { background: rgba(255,255,255,0.03); }
+
+  .step-item.active {
+    background: var(--accent-dim);
+    border-color: rgba(232,255,87,0.2);
+  }
+
+  .step-item.completed .step-num { background: var(--success); color: #000; }
+
+  .step-num {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: var(--muted2);
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+
+  .step-item.active .step-num {
+    background: var(--accent);
+    color: #000;
+  }
+
+  .step-label {
+    font-size: 12px;
+    color: var(--muted);
+    transition: color 0.15s;
+  }
+
+  .step-item.active .step-label,
+  .step-item.completed .step-label { color: var(--text); }
+
+  /* Progress */
+  .progress-wrap {
+    margin-top: auto;
+  }
+
+  .progress-label {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .progress-bar {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+
+  /* Main content */
+  .main {
+    padding: 48px;
+    max-width: 720px;
+  }
+
+  /* Step panels */
+  .step-panel { display: none; }
+  .step-panel.active { display: block; }
+
+  .step-header {
+    margin-bottom: 36px;
+  }
+
+  .step-eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  .step-title {
+    font-family: 'Epilogue', sans-serif;
+    font-size: 28px;
+    font-weight: 900;
+    color: #fff;
+    line-height: 1.2;
+    margin-bottom: 10px;
+  }
+
+  .step-desc {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.7;
+    max-width: 520px;
+  }
+
+  /* Form fields */
+  .field {
+    margin-bottom: 24px;
+  }
+
+  label {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  label .required { color: var(--accent2); margin-left: 4px; }
+  label .hint { color: var(--muted); text-transform: none; letter-spacing: 0; font-size: 11px; margin-left: 6px; opacity: 0.7; }
+
+  input[type="text"],
+  textarea,
+  select {
+    width: 100%;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    resize: vertical;
+  }
+
+  input[type="text"]:focus,
+  textarea:focus,
+  select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(232,255,87,0.06);
+  }
+
+  input[type="text"]::placeholder,
+  textarea::placeholder { color: var(--muted); }
+
+  select { appearance: none; cursor: pointer; }
+  select option { background: #1a1a1a; }
+
+  textarea { min-height: 100px; }
+
+  /* Tag input */
+  .tag-wrap {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-height: 48px;
+    transition: border-color 0.2s;
+    cursor: text;
+  }
+
+  .tag-wrap:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(232,255,87,0.06);
+  }
+
+  .tag {
+    background: var(--accent-dim);
+    border: 1px solid rgba(232,255,87,0.25);
+    color: var(--accent);
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+
+  .tag-remove {
+    background: none;
+    border: none;
+    color: var(--accent);
+    cursor: pointer;
+    padding: 0;
+    font-size: 12px;
+    opacity: 0.6;
+    line-height: 1;
+  }
+
+  .tag-remove:hover { opacity: 1; }
+
+  .tag-input {
+    border: none;
+    background: transparent;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    flex: 1;
+    min-width: 120px;
+    padding: 4px 6px;
+  }
+
+  /* Radio group */
+  .radio-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .radio-option {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+
+  .radio-option:hover { border-color: var(--border-hi); }
+
+  .radio-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0; height: 0;
+  }
+
+  .radio-option.selected {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+  }
+
+  .radio-label {
+    font-size: 13px;
+    color: var(--text);
+    font-weight: 500;
+    margin-bottom: 4px;
+    display: block;
+  }
+
+  .radio-desc {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* Textarea with counter */
+  .textarea-wrap { position: relative; }
+  .char-count {
+    position: absolute;
+    bottom: 10px;
+    right: 12px;
+    font-size: 10px;
+    color: var(--muted);
+    pointer-events: none;
+  }
+  .char-count.warn { color: var(--accent2); }
+
+  /* Divider */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 28px 0;
+  }
+
+  /* Buttons */
+  .btn-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-top: 32px;
+  }
+
+  .btn {
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #000;
+  }
+
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-primary:active { transform: scale(0.97); }
+  .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+
+  .btn-ghost:hover { border-color: var(--border-hi); color: var(--text); }
+
+  .btn-ai {
+    background: transparent;
+    border: 1px solid rgba(87,200,255,0.3);
+    color: var(--accent3);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+  }
+
+  .btn-ai:hover { background: rgba(87,200,255,0.06); border-color: var(--accent3); }
+  .btn-ai:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .btn-ai .spinner {
+    width: 12px; height: 12px;
+    border: 1.5px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+
+  .btn-ai.loading .spinner { display: block; }
+  .btn-ai.loading .btn-ai-label { opacity: 0.6; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* AI suggestion box */
+  .ai-suggestion {
+    background: rgba(87,200,255,0.05);
+    border: 1px solid rgba(87,200,255,0.2);
+    border-radius: 6px;
+    padding: 14px;
+    font-size: 12px;
+    color: var(--accent3);
+    line-height: 1.7;
+    margin-top: 10px;
+    display: none;
+    white-space: pre-wrap;
+  }
+
+  .ai-suggestion.visible { display: block; }
+
+  .ai-suggestion-header {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent3);
+    opacity: 0.6;
+    margin-bottom: 6px;
+  }
+
+  .apply-btn {
+    margin-top: 10px;
+    font-size: 11px;
+    padding: 6px 12px;
+    background: rgba(87,200,255,0.1);
+    border: 1px solid rgba(87,200,255,0.3);
+    border-radius: 4px;
+    color: var(--accent3);
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    transition: all 0.15s;
+  }
+
+  .apply-btn:hover { background: rgba(87,200,255,0.18); }
+
+  /* Output panel */
+  .output-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .output-box {
+    background: var(--code);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .output-toolbar {
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .output-toolbar-left {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .copy-btn {
+    background: var(--muted2);
+    border: none;
+    border-radius: 4px;
+    padding: 5px 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.05em;
+  }
+
+  .copy-btn:hover { background: var(--border-hi); }
+  .copy-btn.copied { background: var(--success); color: #000; }
+
+  .output-code {
+    padding: 24px;
+    font-size: 12px;
+    line-height: 1.8;
+    color: #c8c8c8;
+    white-space: pre-wrap;
+    overflow-x: auto;
+    max-height: 600px;
+    overflow-y: auto;
+  }
+
+  /* Validation */
+  .validation-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .validation-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+  }
+
+  .v-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .v-dot.ok { background: var(--success); }
+  .v-dot.warn { background: var(--accent); }
+  .v-dot.err { background: var(--accent2); }
+
+  .v-label { color: var(--text); }
+  .v-note { color: var(--muted); font-size: 11px; margin-left: auto; }
+
+  /* Section heading inside step */
+  .field-section {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { position: static; height: auto; }
+    .main { padding: 24px; }
+    .radio-group { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-tag">// Platform Tool</div>
+      <div class="logo-title">Skill<br>Builder</div>
+    </div>
+
+    <nav class="steps-nav" id="stepsNav">
+      <div class="step-item active" data-step="1" onclick="goToStep(1)">
+        <div class="step-num">1</div>
+        <div class="step-label">Intent & Identity</div>
+      </div>
+      <div class="step-item" data-step="2" onclick="goToStep(2)">
+        <div class="step-num">2</div>
+        <div class="step-label">Trigger Conditions</div>
+      </div>
+      <div class="step-item" data-step="3" onclick="goToStep(3)">
+        <div class="step-num">3</div>
+        <div class="step-label">Behaviour & Rules</div>
+      </div>
+      <div class="step-item" data-step="4" onclick="goToStep(4)">
+        <div class="step-num">4</div>
+        <div class="step-label">Output Format</div>
+      </div>
+      <div class="step-item" data-step="5" onclick="goToStep(5)">
+        <div class="step-num">5</div>
+        <div class="step-label">Edge Cases</div>
+      </div>
+      <div class="step-item" data-step="6" onclick="goToStep(6)">
+        <div class="step-num">6</div>
+        <div class="step-label">Generate & Export</div>
+      </div>
+    </nav>
+
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span>Progress</span>
+        <span id="progressPct">0%</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill" style="width:0%"></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- Step 1: Intent & Identity -->
+    <div class="step-panel active" id="step1">
+      <div class="step-header">
+        <div class="step-eyebrow">Step 01 — Foundation</div>
+        <h1 class="step-title">What does this<br>skill do?</h1>
+        <p class="step-desc">The name and description are the most critical parts. The description is the primary trigger mechanism — Claude reads it to decide whether to load the skill.</p>
+      </div>
+
+      <div class="field">
+        <label>Skill Name <span class="required">*</span> <span class="hint">— lowercase, hyphenated, no spaces</span></label>
+        <input type="text" id="skillName" placeholder="e.g. rf-capture-assistant, mqtt-debugger" oninput="updateProgress()" />
+      </div>
+
+      <div class="field">
+        <label>One-line Summary <span class="required">*</span></label>
+        <input type="text" id="skillSummary" placeholder="e.g. Guides RF signal capture workflows using CC1101 and ESP8266" oninput="updateProgress()" />
+      </div>
+
+      <div class="field">
+        <label>Full Description <span class="required">*</span> <span class="hint">— this IS the trigger. Be explicit and slightly pushy.</span></label>
+        <div class="textarea-wrap">
+          <textarea id="skillDesc" rows="5" placeholder="Describe what this skill does AND when Claude should use it. Include specific contexts, file types, phrases, or task patterns that should trigger it. Slightly over-specify — Claude tends to undertrigger." oninput="updateCharCount('skillDesc','descCount'); updateProgress()"></textarea>
+          <span class="char-count" id="descCount">0</span>
+        </div>
+        <div class="btn-row" style="margin-top:10px;">
+          <button class="btn btn-ai" id="aiDescBtn" onclick="aiImproveDesc()">
+            <div class="spinner"></div>
+            <span class="btn-ai-label">✦ AI: Strengthen description</span>
+          </button>
+        </div>
+        <div class="ai-suggestion" id="descSuggestion">
+          <div class="ai-suggestion-header">// AI Suggestion</div>
+          <div id="descSuggestionText"></div>
+          <button class="apply-btn" onclick="applyDescSuggestion()">Apply suggestion →</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Tier</label>
+        <div class="radio-group">
+          <label class="radio-option selected" id="tierPublic" onclick="selectTier('public')">
+            <input type="radio" name="tier" value="public" checked>
+            <span class="radio-label">Public</span>
+            <span class="radio-desc">Core platform skill, always available to Claude</span>
+          </label>
+          <label class="radio-option" id="tierExample" onclick="selectTier('example')">
+            <input type="radio" name="tier" value="example">
+            <span class="radio-label">Example</span>
+            <span class="radio-desc">Specialised workflow, domain-specific use</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="nextStep(1)">Continue →</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Trigger Conditions -->
+    <div class="step-panel" id="step2">
+      <div class="step-header">
+        <div class="step-eyebrow">Step 02 — Triggering</div>
+        <h1 class="step-title">When should it<br>fire?</h1>
+        <p class="step-desc">Define the exact phrases, contexts, and file types that should activate this skill. Also define what should NOT trigger it to prevent false positives.</p>
+      </div>
+
+      <div class="field">
+        <label>Trigger Phrases <span class="hint">— press Enter to add each one</span></label>
+        <div class="tag-wrap" id="triggerWrap" onclick="focusTriggerInput()">
+          <input class="tag-input" id="triggerInput" placeholder='Type a phrase, press Enter...' onkeydown="handleTagInput(event, 'triggers')" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label>File Types / Extensions <span class="hint">— e.g. .docx, .pptx, .csv</span></label>
+        <div class="tag-wrap" id="fileTypeWrap" onclick="focusFileInput()">
+          <input class="tag-input" id="fileTypeInput" placeholder='Type extension, press Enter...' onkeydown="handleTagInput(event, 'fileTypes')" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Explicit Exclusions <span class="hint">— what should NOT trigger this skill</span></label>
+        <textarea id="exclusions" rows="3" placeholder="e.g. Do NOT trigger for simple single-step queries. Do NOT use when the deliverable is a Word doc, not a spreadsheet."></textarea>
+      </div>
+
+      <div class="field">
+        <label>Complexity threshold</label>
+        <div class="radio-group">
+          <label class="radio-option selected" id="complexSimple" onclick="selectComplexity('simple')">
+            <input type="radio" name="complexity" value="simple" checked>
+            <span class="radio-label">Any complexity</span>
+            <span class="radio-desc">Fires even on simple one-step requests</span>
+          </label>
+          <label class="radio-option" id="complexMulti" onclick="selectComplexity('multi')">
+            <input type="radio" name="complexity" value="multi">
+            <span class="radio-label">Multi-step only</span>
+            <span class="radio-desc">Only fires for complex, multi-part tasks</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="prevStep(2)">← Back</button>
+        <button class="btn btn-primary" onclick="nextStep(2)">Continue →</button>
+        <button class="btn btn-ai" id="aiTriggerBtn" onclick="aiSuggestTriggers()">
+          <div class="spinner"></div>
+          <span class="btn-ai-label">✦ AI: Suggest triggers</span>
+        </button>
+      </div>
+      <div class="ai-suggestion" id="triggerSuggestion">
+        <div class="ai-suggestion-header">// AI Suggestion</div>
+        <div id="triggerSuggestionText"></div>
+      </div>
+    </div>
+
+    <!-- Step 3: Behaviour & Rules -->
+    <div class="step-panel" id="step3">
+      <div class="step-header">
+        <div class="step-eyebrow">Step 03 — Instructions</div>
+        <h1 class="step-title">How should it<br>behave?</h1>
+        <p class="step-desc">The body of the SKILL.md — the step-by-step instructions Claude follows when the skill triggers. Be explicit. Avoid ambiguity.</p>
+      </div>
+
+      <div class="field">
+        <label>Overview / Purpose <span class="hint">— one paragraph explaining the skill's role</span></label>
+        <textarea id="overview" rows="3" placeholder="e.g. This skill guides Claude through RF capture workflows, ensuring correct wiring verification before any capture session and safe frequency handling..."></textarea>
+      </div>
+
+      <div class="field">
+        <label>Step-by-step Instructions <span class="hint">— numbered steps Claude must follow</span></label>
+        <textarea id="instructions" rows="8" placeholder="1. First, always verify hardware connections before proceeding&#10;2. Check that the CC1101 is responding on SPI...&#10;3. ..."></textarea>
+      </div>
+
+      <div class="field">
+        <label>DO Rules <span class="hint">— explicit positive requirements</span></label>
+        <textarea id="doRules" rows="4" placeholder="- Always verify board-specific datasheets before wiring guidance&#10;- Always provide color-coded wire diagrams&#10;- Always confirm frequency is legal in user's region"></textarea>
+      </div>
+
+      <div class="field">
+        <label>DO NOT Rules <span class="hint">— hard prohibitions</span></label>
+        <textarea id="dontRules" rows="4" placeholder="- Do NOT provide confident pin assignments without verified datasheet&#10;- Do NOT suggest frequencies without legal verification&#10;- Do NOT skip hardware verification step"></textarea>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="prevStep(3)">← Back</button>
+        <button class="btn btn-primary" onclick="nextStep(3)">Continue →</button>
+        <button class="btn btn-ai" id="aiBehaviourBtn" onclick="aiSuggestBehaviour()">
+          <div class="spinner"></div>
+          <span class="btn-ai-label">✦ AI: Draft instructions</span>
+        </button>
+      </div>
+      <div class="ai-suggestion" id="behaviourSuggestion">
+        <div class="ai-suggestion-header">// AI Suggestion</div>
+        <div id="behaviourSuggestionText"></div>
+        <button class="apply-btn" onclick="applyBehaviourSuggestion()">Apply to instructions →</button>
+      </div>
+    </div>
+
+    <!-- Step 4: Output Format -->
+    <div class="step-panel" id="step4">
+      <div class="step-header">
+        <div class="step-eyebrow">Step 04 — Output</div>
+        <h1 class="step-title">What does it<br>produce?</h1>
+        <p class="step-desc">Define the expected output — files, formats, structure. This tells Claude exactly what success looks like.</p>
+      </div>
+
+      <div class="field">
+        <label>Primary Output Type</label>
+        <select id="outputType">
+          <option value="none">No file output — in-conversation response</option>
+          <option value="markdown">.md — Markdown document</option>
+          <option value="docx">.docx — Word document</option>
+          <option value="pdf">.pdf — PDF document</option>
+          <option value="pptx">.pptx — PowerPoint presentation</option>
+          <option value="xlsx">.xlsx — Spreadsheet</option>
+          <option value="html">.html — HTML artifact</option>
+          <option value="code">Code file(s)</option>
+          <option value="multiple">Multiple file types</option>
+          <option value="custom">Custom / other</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Output Structure <span class="hint">— describe the shape of the output</span></label>
+        <textarea id="outputStructure" rows="4" placeholder="e.g. A .md file with sections: Overview, Wiring Diagram, Capture Commands, Troubleshooting. Always ends with a safety checklist.&#10;&#10;Or: Inline response only — numbered steps, no headers, plain prose."></textarea>
+      </div>
+
+      <div class="field">
+        <label>Tone / Style</label>
+        <select id="outputTone">
+          <option value="technical">Technical — precise, exact commands, no fluff</option>
+          <option value="concierge">Concierge — warm, guided, one step at a time</option>
+          <option value="analytical">Analytical — data-driven, shows workings</option>
+          <option value="educational">Educational — explains concepts alongside instructions</option>
+          <option value="brutal">Brutally concise — minimum words, maximum signal</option>
+          <option value="custom">Custom (describe in notes)</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Output Notes <span class="hint">— anything else about format or quality standards</span></label>
+        <textarea id="outputNotes" rows="3" placeholder="e.g. Always show exact commands in code blocks. Never summarise hardware pin assignments — always show the full table."></textarea>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="prevStep(4)">← Back</button>
+        <button class="btn btn-primary" onclick="nextStep(4)">Continue →</button>
+      </div>
+    </div>
+
+    <!-- Step 5: Edge Cases -->
+    <div class="step-panel" id="step5">
+      <div class="step-header">
+        <div class="step-eyebrow">Step 05 — Robustness</div>
+        <h1 class="step-title">What could go<br>wrong?</h1>
+        <p class="step-desc">Edge cases, failure modes, and ambiguous situations. A skill without these will silently degrade on unusual inputs.</p>
+      </div>
+
+      <div class="field">
+        <label>Known Edge Cases <span class="hint">— situations that need special handling</span></label>
+        <textarea id="edgeCases" rows="5" placeholder="e.g. If the user uploads a file but doesn't specify format, default to .xlsx.&#10;If the user asks for both PDF and DOCX output, produce both.&#10;If the task is ambiguous between two skills, prefer X over Y because..."></textarea>
+      </div>
+
+      <div class="field">
+        <label>Dependencies / Compatibility <span class="hint">— tools, libraries, platform requirements</span></label>
+        <textarea id="dependencies" rows="3" placeholder="e.g. Requires bash_tool for file creation. Requires python3 with pypdf installed. Only works in Claude Code, not Claude.ai."></textarea>
+      </div>
+
+      <div class="field">
+        <label>Related Skills <span class="hint">— skills this might conflict or overlap with</span></label>
+        <textarea id="relatedSkills" rows="3" placeholder="e.g. Overlaps with pdf-reading for extraction tasks — prefer this skill when the task also involves creation.&#10;Conflicts with docx when output type is ambiguous."></textarea>
+      </div>
+
+      <div class="field">
+        <label>Additional Notes <span class="hint">— anything else the skill author wants to capture</span></label>
+        <textarea id="additionalNotes" rows="3" placeholder="Free-form notes, caveats, version history, known issues..."></textarea>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="prevStep(5)">← Back</button>
+        <button class="btn btn-primary" onclick="nextStep(5)">Generate Skill →</button>
+        <button class="btn btn-ai" id="aiEdgeBtn" onclick="aiSuggestEdgeCases()">
+          <div class="spinner"></div>
+          <span class="btn-ai-label">✦ AI: Suggest edge cases</span>
+        </button>
+      </div>
+      <div class="ai-suggestion" id="edgeSuggestion">
+        <div class="ai-suggestion-header">// AI Suggestion</div>
+        <div id="edgeSuggestionText"></div>
+        <button class="apply-btn" onclick="applyEdgeSuggestion()">Apply to edge cases →</button>
+      </div>
+    </div>
+
+    <!-- Step 6: Generate -->
+    <div class="step-panel" id="step6">
+      <div class="step-header">
+        <div class="step-eyebrow">Step 06 — Export</div>
+        <h1 class="step-title">Your SKILL.md</h1>
+        <p class="step-desc">Generated from your inputs. Copy this into a <code style="color:var(--accent);font-size:12px">SKILL.md</code> file inside your skill folder at <code style="color:var(--accent);font-size:12px">/mnt/skills/</code>.</p>
+      </div>
+
+      <div class="validation-list" id="validationList"></div>
+
+      <div class="output-box">
+        <div class="output-toolbar">
+          <span class="output-toolbar-left">// SKILL.md</span>
+          <button class="copy-btn" id="copyBtn" onclick="copyOutput()">Copy</button>
+        </div>
+        <pre class="output-code" id="outputCode"></pre>
+      </div>
+
+      <div class="btn-row" style="margin-top:24px;">
+        <button class="btn btn-ghost" onclick="prevStep(6)">← Back</button>
+        <button class="btn btn-ai" id="aiRefineBtn" onclick="aiRefineSkill()">
+          <div class="spinner"></div>
+          <span class="btn-ai-label">✦ AI: Refine entire skill</span>
+        </button>
+      </div>
+      <div class="ai-suggestion" id="refineSuggestion">
+        <div class="ai-suggestion-header">// AI Refinement</div>
+        <div id="refineSuggestionText"></div>
+        <button class="apply-btn" onclick="applyRefinedSkill()">Replace with refined version →</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  // State
+  const state = {
+    currentStep: 1,
+    totalSteps: 6,
+    tier: 'public',
+    complexity: 'simple',
+    outputType: 'none',
+    triggers: [],
+    fileTypes: [],
+    aiDescSuggestion: '',
+    aiBehaviourSuggestion: '',
+    aiEdgeSuggestion: '',
+    aiRefinedSkill: ''
+  };
+
+  // Navigation
+  function goToStep(n) {
+    document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.step-item').forEach(i => i.classList.remove('active'));
+    document.getElementById('step' + n).classList.add('active');
+    document.querySelector('[data-step="' + n + '"]').classList.add('active');
+    state.currentStep = n;
+    updateProgress();
+    if (n === 6) generateOutput();
+  }
+
+  function nextStep(current) {
+    if (current < state.totalSteps) goToStep(current + 1);
+    markCompleted(current);
+  }
+
+  function prevStep(current) {
+    if (current > 1) goToStep(current - 1);
+  }
+
+  function markCompleted(step) {
+    const item = document.querySelector('[data-step="' + step + '"]');
+    if (item) item.classList.add('completed');
+  }
+
+  function updateProgress() {
+    const filled = document.querySelectorAll('.step-item.completed').length;
+    const pct = Math.round((filled / state.totalSteps) * 100);
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressPct').textContent = pct + '%';
+  }
+
+  // Tier selection
+  function selectTier(val) {
+    state.tier = val;
+    document.getElementById('tierPublic').classList.toggle('selected', val === 'public');
+    document.getElementById('tierExample').classList.toggle('selected', val === 'example');
+  }
+
+  // Complexity selection
+  function selectComplexity(val) {
+    state.complexity = val;
+    document.getElementById('complexSimple').classList.toggle('selected', val === 'simple');
+    document.getElementById('complexMulti').classList.toggle('selected', val === 'multi');
+  }
+
+  // Tag inputs
+  function handleTagInput(e, type) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const inputId = type === 'triggers' ? 'triggerInput' : 'fileTypeInput';
+      const wrapId  = type === 'triggers' ? 'triggerWrap'  : 'fileTypeWrap';
+      const val = document.getElementById(inputId).value.trim();
+      if (!val) return;
+      if (type === 'triggers' && !state.triggers.includes(val)) {
+        state.triggers.push(val);
+        renderTags('triggers', 'triggerWrap', 'triggerInput');
+      } else if (type === 'fileTypes' && !state.fileTypes.includes(val)) {
+        state.fileTypes.push(val);
+        renderTags('fileTypes', 'fileTypeWrap', 'fileTypeInput');
+      }
+    }
+  }
+
+  function renderTags(type, wrapId, inputId) {
+    const wrap = document.getElementById(wrapId);
+    const arr = type === 'triggers' ? state.triggers : state.fileTypes;
+    const existing = wrap.querySelectorAll('.tag');
+    existing.forEach(t => t.remove());
+    arr.forEach((val, i) => {
+      const tag = document.createElement('div');
+      tag.className = 'tag';
+      tag.innerHTML = `${val}<button class="tag-remove" onclick="removeTag('${type}',${i})">×</button>`;
+      wrap.insertBefore(tag, wrap.querySelector('input'));
+    });
+    document.getElementById(inputId).value = '';
+  }
+
+  function removeTag(type, i) {
+    if (type === 'triggers') state.triggers.splice(i, 1);
+    else state.fileTypes.splice(i, 1);
+    const wrapId  = type === 'triggers' ? 'triggerWrap'  : 'fileTypeWrap';
+    const inputId = type === 'triggers' ? 'triggerInput' : 'fileTypeInput';
+    renderTags(type, wrapId, inputId);
+  }
+
+  function focusTriggerInput() { document.getElementById('triggerInput').focus(); }
+  function focusFileInput()    { document.getElementById('fileTypeInput').focus(); }
+
+  // Char count
+  function updateCharCount(textareaId, counterId) {
+    const len = document.getElementById(textareaId).value.length;
+    const el  = document.getElementById(counterId);
+    el.textContent = len;
+    el.classList.toggle('warn', len > 800);
+  }
+
+  // Collect all data
+  function collectData() {
+    return {
+      name:         document.getElementById('skillName').value.trim(),
+      summary:      document.getElementById('skillSummary').value.trim(),
+      desc:         document.getElementById('skillDesc').value.trim(),
+      tier:         state.tier,
+      triggers:     state.triggers,
+      fileTypes:    state.fileTypes,
+      exclusions:   document.getElementById('exclusions').value.trim(),
+      complexity:   state.complexity,
+      overview:     document.getElementById('overview').value.trim(),
+      instructions: document.getElementById('instructions').value.trim(),
+      doRules:      document.getElementById('doRules').value.trim(),
+      dontRules:    document.getElementById('dontRules').value.trim(),
+      outputType:   document.getElementById('outputType').value,
+      outputStruct: document.getElementById('outputStructure').value.trim(),
+      outputTone:   document.getElementById('outputTone').value,
+      outputNotes:  document.getElementById('outputNotes').value.trim(),
+      edgeCases:    document.getElementById('edgeCases').value.trim(),
+      dependencies: document.getElementById('dependencies').value.trim(),
+      relatedSkills:document.getElementById('relatedSkills').value.trim(),
+      notes:        document.getElementById('additionalNotes').value.trim()
+    };
+  }
+
+  // Generate SKILL.md
+  function generateOutput() {
+    const d = collectData();
+    let md = '';
+
+    // Frontmatter
+    md += `---\n`;
+    md += `name: ${d.name || 'unnamed-skill'}\n`;
+    const descForFrontmatter = d.desc || d.summary || 'No description provided.';
+    md += `description: "${descForFrontmatter.replace(/"/g, '\\"')}"\n`;
+    if (d.dependencies) md += `compatibility: "${d.dependencies.replace(/"/g, '\\"')}"\n`;
+    md += `---\n\n`;
+
+    // Title
+    md += `# ${d.name || 'Skill'}\n\n`;
+
+    // Overview
+    if (d.overview) {
+      md += `## Overview\n\n${d.overview}\n\n`;
+    }
+
+    // Triggers summary
+    if (d.triggers.length || d.fileTypes.length || d.exclusions) {
+      md += `## When to Use\n\n`;
+      if (d.triggers.length) {
+        md += `**Trigger phrases:** ${d.triggers.join(', ')}\n\n`;
+      }
+      if (d.fileTypes.length) {
+        md += `**File types:** ${d.fileTypes.join(', ')}\n\n`;
+      }
+      if (d.complexity === 'multi') {
+        md += `**Complexity:** Only trigger for multi-step, complex tasks — not simple single-step queries.\n\n`;
+      }
+      if (d.exclusions) {
+        md += `**Do NOT trigger when:**\n${d.exclusions}\n\n`;
+      }
+    }
+
+    // Instructions
+    if (d.instructions) {
+      md += `## Instructions\n\n${d.instructions}\n\n`;
+    }
+
+    // Do / Don't
+    if (d.doRules || d.dontRules) {
+      md += `## Rules\n\n`;
+      if (d.doRules) md += `### Always\n\n${d.doRules}\n\n`;
+      if (d.dontRules) md += `### Never\n\n${d.dontRules}\n\n`;
+    }
+
+    // Output
+    if (d.outputType !== 'none' || d.outputStruct || d.outputNotes) {
+      md += `## Output\n\n`;
+      if (d.outputType !== 'none') md += `**Primary format:** ${d.outputType}\n\n`;
+      if (d.outputTone)   md += `**Tone:** ${d.outputTone}\n\n`;
+      if (d.outputStruct) md += `**Structure:**\n${d.outputStruct}\n\n`;
+      if (d.outputNotes)  md += `**Quality standards:**\n${d.outputNotes}\n\n`;
+    }
+
+    // Edge cases
+    if (d.edgeCases) {
+      md += `## Edge Cases\n\n${d.edgeCases}\n\n`;
+    }
+
+    // Related skills
+    if (d.relatedSkills) {
+      md += `## Related Skills\n\n${d.relatedSkills}\n\n`;
+    }
+
+    // Additional notes
+    if (d.notes) {
+      md += `## Notes\n\n${d.notes}\n\n`;
+    }
+
+    document.getElementById('outputCode').textContent = md.trim();
+    runValidation(d);
+  }
+
+  // Validation
+  function runValidation(d) {
+    const items = [
+      { ok: !!d.name,         label: 'Skill name defined',             note: d.name || 'missing' },
+      { ok: d.desc.length > 60, label: 'Description is substantive',  note: d.desc.length + ' chars' },
+      { ok: d.triggers.length > 0, label: 'Trigger phrases defined',  note: d.triggers.length + ' phrases' },
+      { ok: !!d.instructions, label: 'Instructions provided',          note: d.instructions ? 'present' : 'empty' },
+      { ok: !!d.doRules || !!d.dontRules, label: 'Rules defined',     note: 'DO / DO NOT' },
+      { ok: !!d.edgeCases,    label: 'Edge cases covered',             note: d.edgeCases ? 'present' : 'consider adding' }
+    ];
+
+    const list = document.getElementById('validationList');
+    list.innerHTML = items.map(item => `
+      <div class="validation-item">
+        <div class="v-dot ${item.ok ? 'ok' : 'warn'}"></div>
+        <span class="v-label">${item.label}</span>
+        <span class="v-note">${item.note}</span>
+      </div>
+    `).join('');
+  }
+
+  // Copy
+  function copyOutput() {
+    const text = document.getElementById('outputCode').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('copyBtn');
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+
+  // === AI FUNCTIONS ===
+
+  async function callClaude(systemPrompt, userPrompt, btnId) {
+    const btn = document.getElementById(btnId);
+    btn.disabled = true;
+    btn.classList.add('loading');
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          system: systemPrompt,
+          messages: [{ role: "user", content: userPrompt }]
+        })
+      });
+      const data = await res.json();
+      if (data.error) return `Error: ${data.error.message}`;
+      return data.content.filter(b => b.type === "text").map(b => b.text).join("").trim();
+    } catch (e) {
+      return `Network error: ${e.message}`;
+    } finally {
+      btn.disabled = false;
+      btn.classList.remove('loading');
+    }
+  }
+
+  async function aiImproveDesc() {
+    const name    = document.getElementById('skillName').value.trim();
+    const summary = document.getElementById('skillSummary').value.trim();
+    const current = document.getElementById('skillDesc').value.trim();
+
+    const result = await callClaude(
+      `You are an expert at writing skill descriptions for an AI assistant platform. Skill descriptions are the PRIMARY trigger mechanism — Claude reads them to decide whether to load the skill. They must be explicit, specific, and slightly "pushy" to avoid undertriggering. Do NOT use markdown headers, bullet points, or lists. Return only the improved description text, nothing else.`,
+      `Skill name: ${name}\nSummary: ${summary}\nCurrent description: ${current || '(empty)'}\n\nWrite an improved version that is more specific about when to trigger, covers more edge cases, and is slightly pushy about using the skill. Keep it to 2-4 sentences.`,
+      'aiDescBtn'
+    );
+
+    state.aiDescSuggestion = result;
+    document.getElementById('descSuggestionText').textContent = result;
+    document.getElementById('descSuggestion').classList.add('visible');
+  }
+
+  function applyDescSuggestion() {
+    document.getElementById('skillDesc').value = state.aiDescSuggestion;
+    updateCharCount('skillDesc', 'descCount');
+    document.getElementById('descSuggestion').classList.remove('visible');
+  }
+
+  async function aiSuggestTriggers() {
+    const name    = document.getElementById('skillName').value.trim();
+    const desc    = document.getElementById('skillDesc').value.trim();
+    const summary = document.getElementById('skillSummary').value.trim();
+
+    const result = await callClaude(
+      `You are an expert at designing skill triggering systems for AI assistants. Given a skill's name and description, suggest trigger phrases, exclusions, and file types. Return a plain text list — no markdown, no headers. Format: "Trigger phrases: x, y, z" then newline "Exclusions: ..." then newline "File types: ..." Use only what's relevant; omit sections that don't apply.`,
+      `Skill: ${name}\nDescription: ${desc || summary}\n\nSuggest specific trigger phrases, any file type associations, and explicit exclusions to prevent false positives.`,
+      'aiTriggerBtn'
+    );
+
+    document.getElementById('triggerSuggestionText').textContent = result;
+    document.getElementById('triggerSuggestion').classList.add('visible');
+  }
+
+  async function aiSuggestBehaviour() {
+    const name    = document.getElementById('skillName').value.trim();
+    const desc    = document.getElementById('skillDesc').value.trim();
+    const summary = document.getElementById('skillSummary').value.trim();
+
+    const result = await callClaude(
+      `You are an expert at writing step-by-step instructions for AI skill files. Write clear, numbered instructions that an AI assistant would follow when this skill triggers. Be specific, technical, and unambiguous. Include DO and DO NOT rules at the end. Plain text only — no markdown headers.`,
+      `Skill: ${name}\nDescription: ${desc || summary}\n\nDraft the instructions section of the SKILL.md. Number each step. After the steps, add 3-4 "Always" rules and 3-4 "Never" rules on separate lines.`,
+      'aiBehaviourBtn'
+    );
+
+    state.aiBehaviourSuggestion = result;
+    document.getElementById('behaviourSuggestionText').textContent = result;
+    document.getElementById('behaviourSuggestion').classList.add('visible');
+  }
+
+  function applyBehaviourSuggestion() {
+    document.getElementById('instructions').value = state.aiBehaviourSuggestion;
+    document.getElementById('behaviourSuggestion').classList.remove('visible');
+  }
+
+  async function aiSuggestEdgeCases() {
+    const d = collectData();
+
+    const result = await callClaude(
+      `You are an expert at anticipating failure modes and edge cases in AI skill design. Given a skill's purpose and rules, identify the most likely edge cases, conflicts with other skills, and ambiguous situations. Be specific and practical. Plain text, numbered list.`,
+      `Skill: ${d.name}\nDescription: ${d.desc || d.summary}\nInstructions: ${d.instructions}\nDO: ${d.doRules}\nDON'T: ${d.dontRules}\n\nList the top 4-6 edge cases this skill should explicitly handle, and any potential conflicts with other skills.`,
+      'aiEdgeBtn'
+    );
+
+    state.aiEdgeSuggestion = result;
+    document.getElementById('edgeSuggestionText').textContent = result;
+    document.getElementById('edgeSuggestion').classList.add('visible');
+  }
+
+  function applyEdgeSuggestion() {
+    document.getElementById('edgeCases').value = state.aiEdgeSuggestion;
+    document.getElementById('edgeSuggestion').classList.remove('visible');
+  }
+
+  async function aiRefineSkill() {
+    const current = document.getElementById('outputCode').textContent;
+
+    const result = await callClaude(
+      `You are an expert at writing SKILL.md files for an AI assistant platform. Given a draft SKILL.md, refine it to be cleaner, more precise, better structured, and with a stronger description that will reliably trigger. Return ONLY the complete refined SKILL.md — no commentary, no preamble, no code fences.`,
+      `Here is the current SKILL.md:\n\n${current}\n\nRefine it. Keep all the user's intent. Improve: description trigger strength, instruction clarity, rule specificity, and overall structure. Return only the complete file.`,
+      'aiRefineBtn'
+    );
+
+    state.aiRefinedSkill = result;
+    document.getElementById('refineSuggestionText').textContent = result.substring(0, 300) + (result.length > 300 ? '...' : '');
+    document.getElementById('refineSuggestion').classList.add('visible');
+  }
+
+  function applyRefinedSkill() {
+    document.getElementById('outputCode').textContent = state.aiRefinedSkill;
+    document.getElementById('refineSuggestion').classList.remove('visible');
+  }
+</script>
+</body>
+</html>

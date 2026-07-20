@@ -65,13 +65,14 @@ function switchAppSection(section) {
   } else if (section === 'tool-builder') {
     window.location.href = '/tool-builder';
   } else if (section === 'how-to') {
-    openHelpModal();
+    const helpModal = document.getElementById('help-modal');
+    if (helpModal) helpModal.classList.remove('hidden');
   } else if (section === 'docs') {
     window.open('https://github.com/e404-tagnet/polychomp-ui#readme', '_blank');
   } else if (section === 'new-memory') {
-    openMemoryPanel();
+    showMemoryPanel();
   } else if (section === 'workspace') {
-    toggleWorkspaceBar();
+    toggleWorkspaceFiles();
   } else if (section === 'tagnet') {
     window.open('https://tagnet.net/test.html', '_blank');
   }
@@ -909,6 +910,15 @@ function setupEventListeners() {
     }
   });
   document.getElementById("memory-close").addEventListener("click", hideMemoryPanel);
+
+  // Help modal close
+  const helpClose = document.getElementById("close-help");
+  if (helpClose) {
+    helpClose.addEventListener("click", () => {
+      const helpModal = document.getElementById("help-modal");
+      if (helpModal) helpModal.classList.add("hidden");
+    });
+  }
 
   // Delegate memory actions (promote/demote/delete) since they're dynamically rendered
   memoryContent.addEventListener("click", (e) => {

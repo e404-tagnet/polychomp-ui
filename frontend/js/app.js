@@ -72,7 +72,7 @@ function switchAppSection(section) {
     window.open('https://github.com/e404-tagnet/polychomp-ui#readme', '_blank');
   } else if (section === 'new-memory') {
     showMemoryPanel();
-  } else if (section === 'workspace') {
+  } else if (section === 'workspace-folder') {
     toggleWorkspaceFiles();
   } else if (section === 'tagnet') {
     window.open('https://tagnet.net/test.html', '_blank');
@@ -440,8 +440,15 @@ function sleep(ms) {
 }
 
 // ── Chat Analysis Panel ────────────────────────────────────
+let lastAnalysisMeta = null;
+let lastTokenCount = 0;
+let lastLatencyMs = 0;
+
 function showAnalysisInspector(meta, tokenCount = 0, latencyMs = 0) {
   if (!meta) return;
+  lastAnalysisMeta = meta;
+  lastTokenCount = tokenCount;
+  lastLatencyMs = latencyMs;
   appRoot.classList.add("analysis-open");
   analysisPanel.classList.remove("hidden");
 
@@ -896,6 +903,9 @@ function setupEventListeners() {
     if (analysisPanel.classList.contains("hidden")) {
       appRoot.classList.add("analysis-open");
       analysisPanel.classList.remove("hidden");
+      if (lastAnalysisMeta) {
+        showAnalysisInspector(lastAnalysisMeta, lastTokenCount, lastLatencyMs);
+      }
     } else {
       hideAnalysisInspector();
     }
@@ -911,6 +921,17 @@ function setupEventListeners() {
     }
   });
   document.getElementById("memory-close")?.addEventListener("click", hideMemoryPanel);
+
+  // Options dropdown toggle
+  document.getElementById("chat-options-btn")?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const menu = document.getElementById("chat-options-menu");
+    if (menu) menu.classList.toggle("hidden");
+  });
+  document.addEventListener("click", () => {
+    const menu = document.getElementById("chat-options-menu");
+    if (menu) menu.classList.add("hidden");
+  });
 
   // Help modal close
   document.getElementById("close-help")?.addEventListener("click", () => {

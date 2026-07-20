@@ -450,6 +450,12 @@ function showAnalysisInspector(meta, tokenCount = 0, latencyMs = 0) {
       <h4>Bias Detected</h4>
       <div class="analysis-val bias">${meta.bias || "None"}</div>
     </div>
+    ${meta.ai_audit && meta.ai_audit.confidence > 0 ? `
+    <div class="analysis-block" style="border-left:3px solid var(--teal);padding-left:.6rem;" data-tooltip="Independent audit of the AI response for its own biases">
+      <h4>AI Self-Audit</h4>
+      <div class="analysis-val" style="color:var(--teal);">${meta.ai_audit.dominant ? meta.ai_audit.dominant.replace('ai_','').toUpperCase() : 'NONE'}</div>
+      <p style="margin-top:.3rem;color:var(--overlay0);font-size:.75rem;">Confidence: ${(meta.ai_audit.confidence * 100).toFixed(0)}%</p>
+    </div>` : ''}
     <div class="analysis-block" data-tooltip="How certain the model is about its assessment">
       <h4>Confidence</h4>
       <div class="analysis-val ${confClass}">${(meta.confidence * 100).toFixed(1)}%</div>

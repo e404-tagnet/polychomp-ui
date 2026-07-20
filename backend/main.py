@@ -344,6 +344,9 @@ def chat(req: ChatRequest):
     loop.close()
     if modified_response != llm_response:
         llm_response = modified_response
+    # Merge any plugin-added metadata (e.g., ai_audit) back into prism_meta
+    if plugin_context.get("prism_meta") and plugin_context["prism_meta"] != prism_meta:
+        prism_meta = plugin_context["prism_meta"]
     
     # Store messages
     project["messages"].append({

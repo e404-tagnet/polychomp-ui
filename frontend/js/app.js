@@ -46,7 +46,8 @@ async function init() {
 // ── Icon Rail ──────────────────────────────────────────────
 function setupRail() {
   document.querySelectorAll('.rail-item').forEach(item => {
-    item.addEventListener('click', () => {
+    item.addEventListener('click', (e) => {
+      e.preventDefault();
       const section = item.dataset.section;
       if (section) switchAppSection(section);
     });
@@ -891,7 +892,7 @@ function setupEventListeners() {
     messageInput.style.height = messageInput.scrollHeight + "px";
   });
 
-  document.getElementById("analysis-toggle").addEventListener("click", () => {
+  document.getElementById("analysis-toggle")?.addEventListener("click", () => {
     if (analysisPanel.classList.contains("hidden")) {
       appRoot.classList.add("analysis-open");
       analysisPanel.classList.remove("hidden");
@@ -899,26 +900,23 @@ function setupEventListeners() {
       hideAnalysisInspector();
     }
   });
-  document.getElementById("analysis-close").addEventListener("click", hideAnalysisInspector);
+  document.getElementById("analysis-close")?.addEventListener("click", hideAnalysisInspector);
 
   // Memory panel
-  document.getElementById("memory-toggle").addEventListener("click", () => {
+  document.getElementById("memory-toggle")?.addEventListener("click", () => {
     if (memoryPanel.classList.contains("hidden")) {
       showMemoryPanel();
     } else {
       hideMemoryPanel();
     }
   });
-  document.getElementById("memory-close").addEventListener("click", hideMemoryPanel);
+  document.getElementById("memory-close")?.addEventListener("click", hideMemoryPanel);
 
   // Help modal close
-  const helpClose = document.getElementById("close-help");
-  if (helpClose) {
-    helpClose.addEventListener("click", () => {
-      const helpModal = document.getElementById("help-modal");
-      if (helpModal) helpModal.classList.add("hidden");
-    });
-  }
+  document.getElementById("close-help")?.addEventListener("click", () => {
+    const helpModal = document.getElementById("help-modal");
+    if (helpModal) helpModal.classList.add("hidden");
+  });
 
   // Delegate memory actions (promote/demote/delete) since they're dynamically rendered
   memoryContent.addEventListener("click", (e) => {
@@ -931,9 +929,9 @@ function setupEventListeners() {
     if (target.dataset.delete) deleteMemory(id);
   });
 
-  document.getElementById("settings-btn").addEventListener("click", openSettings);
-  document.getElementById("close-settings").addEventListener("click", closeSettings);
-  document.getElementById("save-settings").addEventListener("click", saveSettings);
+  document.getElementById("settings-btn")?.addEventListener("click", openSettings);
+  document.getElementById("close-settings")?.addEventListener("click", closeSettings);
+  document.getElementById("save-settings")?.addEventListener("click", saveSettings);
 
   // Settings tab switching
   document.querySelectorAll(".setting-tab").forEach(tab => {
@@ -951,9 +949,9 @@ function setupEventListeners() {
     openPluginsModal();
   });
 
-  document.getElementById("new-project-btn").addEventListener("click", openNewProject);
-  document.getElementById("close-new-project").addEventListener("click", closeNewProject);
-  document.getElementById("create-project").addEventListener("click", () => {
+  document.getElementById("new-project-btn")?.addEventListener("click", openNewProject);
+  document.getElementById("close-new-project")?.addEventListener("click", closeNewProject);
+  document.getElementById("create-project")?.addEventListener("click", () => {
     const name = document.getElementById("project-name-input").value.trim();
     const desc = document.getElementById("project-desc-input").value.trim();
     const workspace = document.getElementById("project-workspace-input").value.trim() || null;
@@ -965,8 +963,8 @@ function setupEventListeners() {
     document.getElementById("project-workspace-input").value = "";
   });
 
-  document.getElementById("close-onboarding").addEventListener("click", closeOnboarding);
-  document.getElementById("save-onboarding").addEventListener("click", saveOnboarding);
+  document.getElementById("close-onboarding")?.addEventListener("click", closeOnboarding);
+  document.getElementById("save-onboarding")?.addEventListener("click", saveOnboarding);
 
   // Prompt mode toggle
   document.querySelectorAll('input[name="q10_prompt_mode"]').forEach(el => {
@@ -974,9 +972,9 @@ function setupEventListeners() {
   });
   document.getElementById("preview-prompt-btn")?.addEventListener("click", buildPromptPreview);
 
-  document.getElementById("plugins-btn").addEventListener("click", openPluginManager);
-  document.getElementById("close-plugins").addEventListener("click", closePluginManager);
-  document.getElementById("refresh-plugins").addEventListener("click", () => loadPlugins(true));
+  document.getElementById("plugins-btn")?.addEventListener("click", openPluginManager);
+  document.getElementById("close-plugins")?.addEventListener("click", closePluginManager);
+  document.getElementById("refresh-plugins")?.addEventListener("click", () => loadPlugins(true));
 
   // Plugin filter tabs
   document.querySelectorAll(".plugin-tab").forEach(tab => {
@@ -987,7 +985,7 @@ function setupEventListeners() {
     });
   });
 
-  document.getElementById("clear-chat-btn").addEventListener("click", () => {
+  document.getElementById("clear-chat-btn")?.addEventListener("click", () => {
     if (!currentProject) return;
     if (!confirm("Clear messages for this project?")) return;
     currentProject.messages = [];

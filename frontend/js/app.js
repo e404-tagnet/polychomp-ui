@@ -7,7 +7,7 @@ const API_BASE = window.location.origin;
 let currentProject = null;
 let projects = [];
 let settings = {
-  modelEndpoint: "http://127.0.0.1:11434",
+  modelEndpoint: "http://127.0.0.1:8080",
   modelName: "phi4-mini",
   usePrism: true,
   prismMode: "shadow",
@@ -457,7 +457,7 @@ function showAnalysisInspector(meta, tokenCount = 0, latencyMs = 0) {
   analysisContent.innerHTML = `
     <div class="analysis-block" data-tooltip="Detected cognitive biases in your message">
       <h4>Bias Detected</h4>
-      <div class="analysis-val bias">${meta.bias || "None"}</div>
+      <div class="analysis-val bias">${(meta.bias || "None").toString().toUpperCase()}</div>
     </div>
     ${meta.ai_audit && meta.ai_audit.confidence > 0 ? `
     <div class="analysis-block" style="border-left:3px solid var(--teal);padding-left:.6rem;" data-tooltip="Independent audit of the AI response for its own biases">
@@ -526,25 +526,31 @@ function renderMemories() {
 
   memoryContent.innerHTML = `
     <div class="memory-form">
-      <textarea id="new-memory-text" rows="2" placeholder="Add a memory (fact, preference, context)..."\u003e\u003c/textarea\u003e
-      <input type="text" id="new-memory-tags" placeholder="Tags, comma-separated (optional)"\u003e
-      <button class="btn btn-primary btn-sm" id="add-memory-btn"\u003eAdd Memory\u003c/button\u003e
-    \u003c/div\u003e
+      <textarea id="new-memory-text" rows="2" placeholder="Add a memory (fact, preference, context)..."></textarea>
+      <input type="text" id="new-memory-tags" placeholder="Tags, comma-separated (optional)">
+      <select id="new-memory-tier">
+        <option value="" selected>AI decides final placement</option>
+        <option value="hot">Hot — urgent, use now</option>
+        <option value="warm">Warm — might matter later</option>
+        <option value="cool">Cool — reference only</option>
+      </select>
+      <button class="btn btn-primary btn-sm" id="add-memory-btn">Add Memory</button>
+    </div>
 
-    <div class="memory-tier hot"\u003e
-      <h4\u003eHot <span class="tier-count"\u003e${hot.length}\u003c/span\u003e\u003c/h4\u003e
-      ${hot.length ? hot.map(m => renderMemoryItem(m)).join("") : `<p style="color:var(--overlay0);font-size:.75rem;"\u003eNo hot memories yet.\u003c/p\u003e`}
-    \u003c/div\u003e
+    <div class="memory-tier hot">
+      <h4>Hot <span class="tier-count">${hot.length}</span></h4>
+      ${hot.length ? hot.map(m => renderMemoryItem(m)).join("") : `<p style="color:var(--overlay0);font-size:.75rem;">No hot memories yet.</p>`}
+    </div>
 
-    <div class="memory-tier warm"\u003e
-      <h4\u003eWarm <span class="tier-count"\u003e${warm.length}\u003c/span\u003e\u003c/h4\u003e
-      ${warm.length ? warm.map(m => renderMemoryItem(m)).join("") : `<p style="color:var(--overlay0);font-size:.75rem;"\u003eNo warm memories yet.\u003c/p\u003e`}
-    \u003c/div\u003e
+    <div class="memory-tier warm">
+      <h4>Warm <span class="tier-count">${warm.length}</span></h4>
+      ${warm.length ? warm.map(m => renderMemoryItem(m)).join("") : `<p style="color:var(--overlay0);font-size:.75rem;">No warm memories yet.</p>`}
+    </div>
 
-    <div class="memory-tier cool"\u003e
-      <h4\u003eCool <span class="tier-count"\u003e${cool.length}\u003c/span\u003e\u003c/h4\u003e
-      ${cool.length ? cool.map(m => renderMemoryItem(m)).join("") : `<p style="color:var(--overlay0);font-size:.75rem;"\u003eNo cool memories yet.\u003c/p\u003e`}
-    \u003c/div\u003e
+    <div class="memory-tier cool">
+      <h4>Cool <span class="tier-count">${cool.length}</span></h4>
+      ${cool.length ? warm.map(m => renderMemoryItem(m)).join("") : `<p style="color:var(--overlay0);font-size:.75rem;">No cool memories yet.</p>`}
+    </div>
   `;
 
   // Wire add button
@@ -576,11 +582,12 @@ async function addMemory() {
   if (!content || !currentProject) return;
   const tagsRaw = document.getElementById("new-memory-tags")?.value?.trim() || "";
   const tags = tagsRaw.split(",").map(t => t.trim()).filter(Boolean);
+  const tier = document.getElementById("new-memory-tier")?.value || "hot";
 
   await fetch(`${API_BASE}/api/projects/${currentProject.id}/memories`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ content, tier: "hot", tags }),
+    body: JSON.stringify({ content, tier: tier || "hot", tags }),
   });
   await loadMemories();
 }
@@ -931,6 +938,22 @@ function setupEventListeners() {
   document.addEventListener("click", () => {
     const menu = document.getElementById("chat-options-menu");
     if (menu) menu.classList.add("hidden");
+  });
+
+  // Workspace submenu toggle
+  document.getElementById("workspace-toggle-btn")?.addEventListener("click", () => {
+    const submenu = document.getElementById("workspace-submenu");
+    const btn = document.getElementById("workspace-toggle-btn");
+    if (submenu && btn) {
+      submenu.classList.toggle("hidden");
+      btn.classList.toggle("open");
+    }
+  });
+
+  // Help button opens help modal
+  document.getElementById("help-btn")?.addEventListener("click", () => {
+    const helpModal = document.getElementById('help-modal');
+    if (helpModal) helpModal.classList.remove('hidden');
   });
 
   // Help modal close

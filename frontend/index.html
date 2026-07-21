@@ -53,6 +53,22 @@
         </div>
       </header>
       <div id="project-list" class="project-list"></div>
+      <div class="sidebar-section">
+        <button class="sidebar-section-toggle" id="workspace-toggle-btn">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="section-chevron"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          Workspaces
+        </button>
+        <div class="sidebar-section-content hidden" id="workspace-submenu">
+          <div class="workspace-link-item" data-tooltip="Open workspace folder">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            <span>Prism Workspace</span>
+          </div>
+          <div class="workspace-link-item" data-tooltip="Open Hermes workspace">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            <span>Hermes Workspace</span>
+          </div>
+        </div>
+      </div>
       <footer class="sidebar-footer">
         <button id="plugins-btn" class="btn btn-ghost">Plugins</button>
         <button id="settings-btn" class="btn btn-ghost">Settings</button>
@@ -203,16 +219,17 @@
         <!-- General Tab -->
         <div id="tab-general" class="setting-panel active">
           <div class="setting-row">
-            <label for="model-endpoint">Model Endpoint</label>
-            <input type="text" id="model-endpoint" value="http://127.0.0.1:11434">
+            <label for="model-endpoint">LLM Endpoint</label>
+            <input type="text" id="model-endpoint" value="http://127.0.0.1:8080">
+            <p style="color:var(--overlay0);font-size:.75rem;margin-top:.25rem;">llama.cpp server, Ollama, or any OpenAI-compatible endpoint.</p>
           </div>
           <div class="setting-row">
-            <label for="model-name">Model</label>
+            <label for="model-name">Model / GGUF</label>
             <select id="model-name">
-              <option value="phi4-mini" selected>phi4-mini (fast, local)</option>
-              <option value="llama3.1:8b">llama3.1:8b (balanced)</option>
-              <option value="mistral:7b">mistral:7b (creative)</option>
-              <option value="qwen2.5:7b">qwen2.5:7b (precise)</option>
+              <option value="phi4-mini" selected>phi4-mini (fast)</option>
+              <option value="llama3.1-8b">llama3.1-8b (balanced)</option>
+              <option value="mistral-7b">mistral-7b (creative)</option>
+              <option value="qwen2.5-7b">qwen2.5-7b (precise)</option>
             </select>
           </div>
           <div class="setting-row">

@@ -611,13 +611,13 @@
       <div class="step-header">
         <div class="step-eyebrow">01 — Concept</div>
         <h1 class="step-title">What Is a Tool Here</h1>
-        <p class="step-desc">A practical guide to building interactive AI-powered tools directly inside Claude artifacts — with a live working example.</p>
+        <p class="step-desc">A practical guide to building interactive AI-powered tools directly inside AI artifacts — with a live working example.</p>
       </div>
 
       <div class="concept-grid">
         <div class="concept-card green">
           <h3>Platform Tool</h3>
-          <p>Claude invokes these internally — bash, calendar, web search. You can't build these. They're wired into the platform.</p>
+          <p>The platform invokes these internally — bash, calendar, web search. You can't build these. They're wired into the platform.</p>
         </div>
         <div class="concept-card red">
           <h3>HTML Artifact Tool</h3>
@@ -625,7 +625,7 @@
         </div>
         <div class="concept-card blue">
           <h3>AI-Powered Artifact</h3>
-          <p>An HTML/React artifact that calls the Anthropic API. Claude inside Claude — the artifact IS the tool AND the intelligence.</p>
+          <p>An HTML/React artifact that calls the OpenAI-compatible API. AI inside the tool — the artifact IS the tool AND the intelligence.</p>
         </div>
       </div>
     </div>
@@ -677,7 +677,7 @@
           <div class="dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
           <div class="lang">JavaScript</div>
         </div>
-        <pre><span class="kw">const</span> <span class="fn">callClaude</span> = <span class="kw">async</span> (userInput) => {
+        <pre><span class="kw">const</span> <span class="fn">callLLM</span> = <span class="kw">async</span> (userInput) => {
   <span class="kw">const</span> response = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">"https://api.anthropic.com/v1/messages"</span>, {
     method: <span class="str">"POST"</span>,
     headers: {
@@ -685,7 +685,7 @@
       <span class="cm">// API key injected by platform — never hardcode it</span>
     },
     body: <span class="fn">JSON.stringify</span>({
-      model: <span class="str">"claude-sonnet-4-20250514"</span>,   <span class="cm">// Always Sonnet 4</span>
+      model: <span class="str">"local-model"</span>,   <span class="cm">// Always Sonnet 4</span>
       max_tokens: <span class="num">1000</span>,
       system: <span class="str">"You are a specialist tool. Respond only in JSON."</span>,
       messages: [
@@ -707,7 +707,7 @@
       <div class="anatomy">
         <div class="anatomy-row">
           <div class="anatomy-key">model</div>
-          <div class="anatomy-val">Always <code>claude-sonnet-4-20250514</code>. Sonnet 4 — fast, capable, cost-effective for artifact use.</div>
+          <div class="anatomy-val">Always <code>local-model</code>. Sonnet 4 — fast, capable, cost-effective for artifact use.</div>
         </div>
         <div class="anatomy-row">
           <div class="anatomy-key">max_tokens</div>
@@ -723,7 +723,7 @@
         </div>
         <div class="anatomy-row">
           <div class="anatomy-key">API key</div>
-          <div class="anatomy-val">Never pass it — the Claude.ai platform injects it automatically. Hardcoding it is both pointless and a security fail.</div>
+          <div class="anatomy-val">Never pass it — the Prism-UI platform injects it automatically. Hardcoding it is both pointless and a security fail.</div>
         </div>
       </div>
     </div>
@@ -752,7 +752,7 @@
     method: <span class="str">"POST"</span>,
     headers: { <span class="str">"Content-Type"</span>: <span class="str">"application/json"</span> },
     body: <span class="fn">JSON.stringify</span>({
-      model: <span class="str">"claude-sonnet-4-20250514"</span>,
+      model: <span class="str">"local-model"</span>,
       max_tokens: <span class="num">1000</span>,
       system: <span class="str">"Your tool's personality and rules go here."</span>,
       messages: [{ role: <span class="str">"user"</span>, content: userInput }]
@@ -775,7 +775,7 @@
         <h1 class="step-title">Live Demo Tool</h1>
       </div>
 
-      <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">This artifact IS the example. The button below fires a real API call to Claude to explain any technical term you type:</p>
+      <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">This artifact IS the example. The button below fires a real API call to the LLM to explain any technical term you type:</p>
 
       <div class="demo-panel">
         <div class="demo-header">
@@ -812,7 +812,7 @@
         </div>
         <div class="tip">
           <span class="icon">◆</span>
-          <span><strong>No localStorage in Claude.ai artifacts.</strong> Use JS variables and React state instead. Data doesn't persist between page loads here.</span>
+          <span><strong>No localStorage in Prism-UI artifacts.</strong> Use JS variables and React state instead. Data doesn't persist between page loads here.</span>
         </div>
         <div class="tip">
           <span class="icon">◆</span>
@@ -829,7 +829,7 @@
       </div>
 
       <div class="footer">
-        // Claude Sonnet 4 · Anthropic API · Built as a self-demonstrating guide
+        // Local model · OpenAI-compatible API · Built as a self-demonstrating guide
       </div>
     </div>
 
@@ -888,7 +888,7 @@
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
+          model: "local-model",
           max_tokens: 1000,
           system: "You are a brutally concise technical explainer. When given a term, explain it in 2-4 sentences: what it is, what problem it solves, and one concrete example of it in use. No fluff, no markdown headers, no bullet points. Plain prose only.",
           messages: [{ role: "user", content: `Explain: ${input}` }]

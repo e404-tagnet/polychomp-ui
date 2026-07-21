@@ -414,6 +414,14 @@ function appendMessage(role, content, prismMeta, animate = true) {
     });
   }
 
+  // Click the whole user message to open analysis
+  if (prismMeta && role === "user") {
+    wrapper.style.cursor = "pointer";
+    wrapper.addEventListener("click", () => {
+      showAnalysisInspector(prismMeta);
+    });
+  }
+
   messages.appendChild(wrapper);
   messages.scrollTop = messages.scrollHeight;
 }
@@ -529,7 +537,7 @@ function renderMemories() {
       <textarea id="new-memory-text" rows="2" placeholder="Add a memory (fact, preference, context)..."></textarea>
       <input type="text" id="new-memory-tags" placeholder="Tags, comma-separated (optional)">
       <select id="new-memory-tier">
-        <option value="" selected>AI decides final placement</option>
+        <option value="" selected>User preference (AI final call)</option>
         <option value="hot">Hot — urgent, use now</option>
         <option value="warm">Warm — might matter later</option>
         <option value="cool">Cool — reference only</option>
@@ -703,9 +711,30 @@ async function loadWorkspace() {
     bar.classList.remove("hidden");
 
     renderWorkspaceFiles();
+    updateSidebarWorkspace();
   } catch (e) {
     document.getElementById("workspace-path").textContent = "Error loading workspace";
     bar.classList.remove("hidden");
+    updateSidebarWorkspace();
+  }
+}
+
+function updateSidebarWorkspace() {
+  const link = document.getElementById("current-workspace-link");
+  const name = document.getElementById("current-workspace-name");
+  const noMsg = document.getElementById("no-workspace-msg");
+  if (!link || !name || !noMsg) return;
+
+  const path = currentProject?.workspace_path;
+  if (path) {
+    link.style.display = "flex";
+    noMsg.style.display = "none";
+    const folderName = path.split(/[\\/]/).filter(Boolean).pop() || "Workspace";
+    name.textContent = folderName;
+    link.onclick = () => window.open(`file://${path}`, "_blank");
+  } else {
+    link.style.display = "none";
+    noMsg.style.display = "block";
   }
 }
 

@@ -692,7 +692,7 @@
       <div class="step-header">
         <div class="step-eyebrow">Step 01 — Foundation</div>
         <h1 class="step-title">What does this<br>skill do?</h1>
-        <p class="step-desc">The name and description are the most critical parts. The description is the primary trigger mechanism — Claude reads it to decide whether to load the skill.</p>
+        <p class="step-desc">The name and description are the most critical parts. The description is the primary trigger mechanism — the assistant reads it to decide whether to load the skill.</p>
       </div>
 
       <div class="field">
@@ -708,7 +708,7 @@
       <div class="field">
         <label>Full Description <span class="required">*</span> <span class="hint">— this IS the trigger. Be explicit and slightly pushy.</span></label>
         <div class="textarea-wrap">
-          <textarea id="skillDesc" rows="5" placeholder="Describe what this skill does AND when Claude should use it. Include specific contexts, file types, phrases, or task patterns that should trigger it. Slightly over-specify — Claude tends to undertrigger." oninput="updateCharCount('skillDesc','descCount'); updateProgress()"></textarea>
+          <textarea id="skillDesc" rows="5" placeholder="Describe what this skill does AND when the assistant should use it. Include specific contexts, file types, phrases, or task patterns that should trigger it. Slightly over-specify — assistants tend to undertrigger." oninput="updateCharCount('skillDesc','descCount'); updateProgress()"></textarea>
           <span class="char-count" id="descCount">0</span>
         </div>
         <div class="btn-row" style="margin-top:10px;">
@@ -730,7 +730,7 @@
           <label class="radio-option selected" id="tierPublic" onclick="selectTier('public')">
             <input type="radio" name="tier" value="public" checked>
             <span class="radio-label">Public</span>
-            <span class="radio-desc">Core platform skill, always available to Claude</span>
+            <span class="radio-desc">Core platform skill, always available to the assistant</span>
           </label>
           <label class="radio-option" id="tierExample" onclick="selectTier('example')">
             <input type="radio" name="tier" value="example">
@@ -807,16 +807,16 @@
       <div class="step-header">
         <div class="step-eyebrow">Step 03 — Instructions</div>
         <h1 class="step-title">How should it<br>behave?</h1>
-        <p class="step-desc">The body of the SKILL.md — the step-by-step instructions Claude follows when the skill triggers. Be explicit. Avoid ambiguity.</p>
+        <p class="step-desc">The body of the SKILL.md — the step-by-step instructions the assistant follows when the skill triggers. Be explicit. Avoid ambiguity.</p>
       </div>
 
       <div class="field">
         <label>Overview / Purpose <span class="hint">— one paragraph explaining the skill's role</span></label>
-        <textarea id="overview" rows="3" placeholder="e.g. This skill guides Claude through RF capture workflows, ensuring correct wiring verification before any capture session and safe frequency handling..."></textarea>
+        <textarea id="overview" rows="3" placeholder="e.g. This skill guides the assistant through RF capture workflows, ensuring correct wiring verification before any capture session and safe frequency handling..."></textarea>
       </div>
 
       <div class="field">
-        <label>Step-by-step Instructions <span class="hint">— numbered steps Claude must follow</span></label>
+        <label>Step-by-step Instructions <span class="hint">— numbered steps the assistant must follow</span></label>
         <textarea id="instructions" rows="8" placeholder="1. First, always verify hardware connections before proceeding&#10;2. Check that the CC1101 is responding on SPI...&#10;3. ..."></textarea>
       </div>
 
@@ -850,7 +850,7 @@
       <div class="step-header">
         <div class="step-eyebrow">Step 04 — Output</div>
         <h1 class="step-title">What does it<br>produce?</h1>
-        <p class="step-desc">Define the expected output — files, formats, structure. This tells Claude exactly what success looks like.</p>
+        <p class="step-desc">Define the expected output — files, formats, structure. This tells the assistant exactly what success looks like.</p>
       </div>
 
       <div class="field">
@@ -912,7 +912,7 @@
 
       <div class="field">
         <label>Dependencies / Compatibility <span class="hint">— tools, libraries, platform requirements</span></label>
-        <textarea id="dependencies" rows="3" placeholder="e.g. Requires bash_tool for file creation. Requires python3 with pypdf installed. Only works in Claude Code, not Claude.ai."></textarea>
+        <textarea id="dependencies" rows="3" placeholder="e.g. Requires bash_tool for file creation. Requires python3 with pypdf installed. Only works in the assistant Code, not the assistant.ai."></textarea>
       </div>
 
       <div class="field">
@@ -1226,7 +1226,7 @@
 
   // === AI FUNCTIONS ===
 
-  async function callClaude(systemPrompt, userPrompt, btnId) {
+  async function callthe assistant(systemPrompt, userPrompt, btnId) {
     const btn = document.getElementById(btnId);
     btn.disabled = true;
     btn.classList.add('loading');
@@ -1235,7 +1235,7 @@
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
+          model: "the assistant-sonnet-4-20250514",
           max_tokens: 1000,
           system: systemPrompt,
           messages: [{ role: "user", content: userPrompt }]
@@ -1257,8 +1257,8 @@
     const summary = document.getElementById('skillSummary').value.trim();
     const current = document.getElementById('skillDesc').value.trim();
 
-    const result = await callClaude(
-      `You are an expert at writing skill descriptions for an AI assistant platform. Skill descriptions are the PRIMARY trigger mechanism — Claude reads them to decide whether to load the skill. They must be explicit, specific, and slightly "pushy" to avoid undertriggering. Do NOT use markdown headers, bullet points, or lists. Return only the improved description text, nothing else.`,
+    const result = await callthe assistant(
+      `You are an expert at writing skill descriptions for an AI assistant platform. Skill descriptions are the PRIMARY trigger mechanism — the assistant reads them to decide whether to load the skill. They must be explicit, specific, and slightly "pushy" to avoid undertriggering. Do NOT use markdown headers, bullet points, or lists. Return only the improved description text, nothing else.`,
       `Skill name: ${name}\nSummary: ${summary}\nCurrent description: ${current || '(empty)'}\n\nWrite an improved version that is more specific about when to trigger, covers more edge cases, and is slightly pushy about using the skill. Keep it to 2-4 sentences.`,
       'aiDescBtn'
     );
@@ -1279,7 +1279,7 @@
     const desc    = document.getElementById('skillDesc').value.trim();
     const summary = document.getElementById('skillSummary').value.trim();
 
-    const result = await callClaude(
+    const result = await callthe assistant(
       `You are an expert at designing skill triggering systems for AI assistants. Given a skill's name and description, suggest trigger phrases, exclusions, and file types. Return a plain text list — no markdown, no headers. Format: "Trigger phrases: x, y, z" then newline "Exclusions: ..." then newline "File types: ..." Use only what's relevant; omit sections that don't apply.`,
       `Skill: ${name}\nDescription: ${desc || summary}\n\nSuggest specific trigger phrases, any file type associations, and explicit exclusions to prevent false positives.`,
       'aiTriggerBtn'
@@ -1294,7 +1294,7 @@
     const desc    = document.getElementById('skillDesc').value.trim();
     const summary = document.getElementById('skillSummary').value.trim();
 
-    const result = await callClaude(
+    const result = await callthe assistant(
       `You are an expert at writing step-by-step instructions for AI skill files. Write clear, numbered instructions that an AI assistant would follow when this skill triggers. Be specific, technical, and unambiguous. Include DO and DO NOT rules at the end. Plain text only — no markdown headers.`,
       `Skill: ${name}\nDescription: ${desc || summary}\n\nDraft the instructions section of the SKILL.md. Number each step. After the steps, add 3-4 "Always" rules and 3-4 "Never" rules on separate lines.`,
       'aiBehaviourBtn'
@@ -1313,7 +1313,7 @@
   async function aiSuggestEdgeCases() {
     const d = collectData();
 
-    const result = await callClaude(
+    const result = await callthe assistant(
       `You are an expert at anticipating failure modes and edge cases in AI skill design. Given a skill's purpose and rules, identify the most likely edge cases, conflicts with other skills, and ambiguous situations. Be specific and practical. Plain text, numbered list.`,
       `Skill: ${d.name}\nDescription: ${d.desc || d.summary}\nInstructions: ${d.instructions}\nDO: ${d.doRules}\nDON'T: ${d.dontRules}\n\nList the top 4-6 edge cases this skill should explicitly handle, and any potential conflicts with other skills.`,
       'aiEdgeBtn'
@@ -1332,7 +1332,7 @@
   async function aiRefineSkill() {
     const current = document.getElementById('outputCode').textContent;
 
-    const result = await callClaude(
+    const result = await callthe assistant(
       `You are an expert at writing SKILL.md files for an AI assistant platform. Given a draft SKILL.md, refine it to be cleaner, more precise, better structured, and with a stronger description that will reliably trigger. Return ONLY the complete refined SKILL.md — no commentary, no preamble, no code fences.`,
       `Here is the current SKILL.md:\n\n${current}\n\nRefine it. Keep all the user's intent. Improve: description trigger strength, instruction clarity, rule specificity, and overall structure. Return only the complete file.`,
       'aiRefineBtn'

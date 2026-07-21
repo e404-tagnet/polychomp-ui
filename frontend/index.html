@@ -59,13 +59,14 @@
           Workspaces
         </button>
         <div class="sidebar-section-content hidden" id="workspace-submenu">
-          <div class="workspace-link-item" data-tooltip="Open workspace folder">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-            <span>Prism Workspace</span>
-          </div>
-          <div class="workspace-link-item" data-tooltip="Open Hermes workspace">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-            <span>Hermes Workspace</span>
+          <div id="workspace-links">
+            <div class="workspace-link-item" id="current-workspace-link" style="display:none;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+              <span id="current-workspace-name">Open workspace folder</span>
+            </div>
+            <div class="workspace-link-item" id="no-workspace-msg" style="color:var(--overlay0);font-size:.72rem;">
+              No workspace linked to this project.
+            </div>
           </div>
         </div>
       </div>
@@ -483,7 +484,7 @@
   <!-- Plugin Manager Modal -->
   <div id="plugin-modal" class="modal hidden">
     <div class="modal-backdrop"></div>
-    <div class="modal-card" style="width:600px;max-height:90vh;display:flex;flex-direction:column;">
+    <div class="modal-card" style="width:600px;height:80vh;display:flex;flex-direction:column;">
       <header class="modal-header">
         <h3>Plugin Manager</h3>
         <button class="btn btn-ghost btn-sm" id="close-plugins">×</button>
@@ -515,17 +516,17 @@
         <div class="help-section">
           <h4>Getting Started</h4>
           <ul>
-            <li><strong>Projects</strong> — Create a project for each task or topic. Link a local folder to keep documents nearby.</li>
-            <li><strong>Chat</strong> — Type a message and press Enter to send. The AI will respond based on your settings.</li>
-            <li><strong>Routes</strong> — The colored badges above the chat show the AI's response strategy (comply, challenge, clarify, etc.).</li>
+            <li><strong>Projects:</strong> Create a project for each task or topic. Link a local folder to keep documents nearby.</li>
+            <li><strong>Chat:</strong> Type a message and press Enter to send. The AI will respond based on your settings.</li>
+            <li><strong>Routes:</strong> The colored badges above the chat show the AI's response strategy (comply, challenge, clarify, etc.).</li>
           </ul>
         </div>
         <div class="help-section">
           <h4>Panels</h4>
           <ul>
-            <li><strong>Analysis</strong> (top-right) — Inspect bias detection, confidence scores, and session metrics.</li>
-            <li><strong>Memory</strong> (top-right) — Save facts and context across sessions. Hot/Warm/Cool tiers auto-decay.</li>
-            <li><strong>Workspace</strong> — Link a folder to any project. Click file chips to inject content into chat.</li>
+            <li><strong>Analysis:</strong> (top-right) Inspect bias detection, confidence scores, and session metrics.</li>
+            <li><strong>Memory:</strong> (top-right) Save facts and context across sessions. Hot/Warm/Cool tiers auto-decay.</li>
+            <li><strong>Workspace:</strong> Link a folder to any project. Click file chips to inject content into chat.</li>
           </ul>
         </div>
         <div class="help-section">
